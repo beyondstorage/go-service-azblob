@@ -1,6 +1,6 @@
 /*
-Package example provided support for local file system.
+Package azblob provided support for Azure Storage containers and blobs objects (https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction)
 */
-package example
+package azblob
 
 //go:generate definitions service.hcl
