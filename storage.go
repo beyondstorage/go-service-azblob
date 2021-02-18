@@ -129,7 +129,9 @@ func (s *Storage) read(ctx context.Context, path string, w io.Writer, opt pairSt
 		count = opt.Size
 	}
 
-	output, err := s.bucket.NewBlockBlobURL(rp).Download(ctx, offset, count, azblob.BlobAccessConditions{}, false)
+	output, err := s.bucket.NewBlockBlobURL(rp).Download(
+		ctx, offset, count,
+		azblob.BlobAccessConditions{}, false, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		return 0, err
 	}
@@ -151,7 +153,7 @@ func (s *Storage) read(ctx context.Context, path string, w io.Writer, opt pairSt
 func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o *Object, err error) {
 	rp := s.getAbsPath(path)
 
-	output, err := s.bucket.NewBlockBlobURL(rp).GetProperties(ctx, azblob.BlobAccessConditions{})
+	output, err := s.bucket.NewBlockBlobURL(rp).GetProperties(ctx, azblob.BlobAccessConditions{}, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -190,9 +192,27 @@ func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int6
 		r = iowrap.CallbackReader(r, opt.IoCallback)
 	}
 
-	// TODO: add checksum and storage class support.
-	_, err = s.bucket.NewBlockBlobURL(rp).Upload(ctx, iowrap.SizedReadSeekCloser(r, size),
-		azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	accessTier := azblob.AccessTierNone
+	if opt.HasAccessTier {
+		accessTier = azblob.AccessTierType(opt.AccessTier)
+	}
+
+	headers := azblob.BlobHTTPHeaders{}
+	if opt.HasContentMd5 {
+		headers.ContentMD5, err = base64.StdEncoding.DecodeString(opt.ContentMd5)
+		if err != nil {
+			return 0, err
+		}
+	}
+	if opt.HasContentType {
+		headers.ContentType = opt.ContentType
+	}
+
+	_, err = s.bucket.NewBlockBlobURL(rp).Upload(
+		ctx, iowrap.SizedReadSeekCloser(r, size),
+		headers, azblob.Metadata{}, azblob.BlobAccessConditions{},
+		accessTier, azblob.BlobTagsMap{}, azblob.ClientProvidedKeyOptions{},
+	)
 	if err != nil {
 		return 0, err
 	}
