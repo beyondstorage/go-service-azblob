@@ -3,8 +3,8 @@ name = "azblob"
 [namespace.service]
 
 [namespace.service.new]
-required = ["credential"]
-optional = ["endpoint", "http_client_options", "pair_policy"]
+required = ["credential", "endpoint"]
+optional = ["http_client_options", "pair_policy"]
 
 [namespace.storage.new]
 required = ["name"]

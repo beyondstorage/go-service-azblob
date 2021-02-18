@@ -48,9 +48,9 @@ type pairServiceNew struct {
 	// Required pairs
 	HasCredential bool
 	Credential    string
+	HasEndpoint   bool
+	Endpoint      string
 	// Optional pairs
-	HasEndpoint          bool
-	Endpoint             string
 	HasHTTPClientOptions bool
 	HTTPClientOptions    *httpclient.Options
 	HasPairPolicy        bool
@@ -70,10 +70,10 @@ func parsePairServiceNew(opts []Pair) (pairServiceNew, error) {
 		case "credential":
 			result.HasCredential = true
 			result.Credential = v.Value.(string)
-		// Optional pairs
 		case "endpoint":
 			result.HasEndpoint = true
 			result.Endpoint = v.Value.(string)
+		// Optional pairs
 		case "http_client_options":
 			result.HasHTTPClientOptions = true
 			result.HTTPClientOptions = v.Value.(*httpclient.Options)
@@ -85,6 +85,9 @@ func parsePairServiceNew(opts []Pair) (pairServiceNew, error) {
 	}
 	if !result.HasCredential {
 		return pairServiceNew{}, services.NewPairRequiredError("credential")
+	}
+	if !result.HasEndpoint {
+		return pairServiceNew{}, services.NewPairRequiredError("endpoint")
 	}
 
 	return result, nil
