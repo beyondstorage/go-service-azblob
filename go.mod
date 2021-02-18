@@ -1,6 +1,6 @@
 module github.com/aos-dev/go-service-azblob
 
-go 1.14
+go 1.15
 
 require (
 	github.com/Azure/azure-pipeline-go v0.2.2
