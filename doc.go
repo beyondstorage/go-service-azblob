@@ -3,4 +3,4 @@ Package azblob provided support for Azure Storage containers and blobs objects (
 */
 package azblob
 
-//go:generate definitions service.hcl
+//go:generate go run -tags tools github.com/aos-dev/go-storage/v3/cmd/definitions service.toml
