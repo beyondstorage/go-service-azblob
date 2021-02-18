@@ -252,7 +252,7 @@ func (s *Storage) formatError(op string, err error, path ...string) error {
 	}
 }
 
-func (s *Storage) formatFileObject(v azblob.BlobItem) (o *typ.Object, err error) {
+func (s *Storage) formatFileObject(v azblob.BlobItemInternal) (o *typ.Object, err error) {
 	o = s.newObject(false)
 	o.ID = v.Name
 	o.Path = s.getRelPath(v.Name)
