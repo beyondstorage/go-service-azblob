@@ -4,20 +4,20 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
-	"github.com/aos-dev/go-storage/v2/types/info"
 
-	"github.com/aos-dev/go-storage/v2"
-	"github.com/aos-dev/go-storage/v2/pkg/credential"
-	"github.com/aos-dev/go-storage/v2/pkg/httpclient"
-	"github.com/aos-dev/go-storage/v2/services"
-	"github.com/aos-dev/go-storage/v2/types"
-	ps "github.com/aos-dev/go-storage/v2/types/pairs"
+	ps "github.com/aos-dev/go-storage/v3/pairs"
+	"github.com/aos-dev/go-storage/v3/pkg/credential"
+	"github.com/aos-dev/go-storage/v3/pkg/endpoint"
+	"github.com/aos-dev/go-storage/v3/pkg/httpclient"
+	"github.com/aos-dev/go-storage/v3/services"
+	typ "github.com/aos-dev/go-storage/v3/types"
 )
 
 // Service is the azblob config.
@@ -36,6 +36,8 @@ type Storage struct {
 
 	name    string
 	workDir string
+
+	pairPolicy typ.PairPolicy
 }
 
 // String implements Storager.String
@@ -47,17 +49,17 @@ func (s *Storage) String() string {
 }
 
 // New will create both Servicer and Storager.
-func New(pairs ...*types.Pair) (storage.Servicer, storage.Storager, error) {
+func New(pairs ...typ.Pair) (typ.Servicer, typ.Storager, error) {
 	return newServicerAndStorager(pairs...)
 }
 
 // NewServicer will create Servicer only.
-func NewServicer(pairs ...*types.Pair) (storage.Servicer, error) {
+func NewServicer(pairs ...typ.Pair) (typ.Servicer, error) {
 	return newServicer(pairs...)
 }
 
 // NewStorager will create Storager only.
-func NewStorager(pairs ...*types.Pair) (storage.Storager, error) {
+func NewStorager(pairs ...typ.Pair) (typ.Storager, error) {
 	_, store, err := newServicerAndStorager(pairs...)
 	return store, err
 }
@@ -73,10 +75,10 @@ func NewStorager(pairs ...*types.Pair) (storage.Storager, error) {
 //      - BlobURL's       methods perform operations on a container's blob regardless of the blob's type.
 //
 // Our Service will store a ServiceURL for operation.
-func newServicer(pairs ...*types.Pair) (srv *Service, err error) {
+func newServicer(pairs ...typ.Pair) (srv *Service, err error) {
 	defer func() {
 		if err != nil {
-			err = &services.InitError{Op: services.OpNewServicer, Type: Type, Err: err, Pairs: pairs}
+			err = &services.InitError{Op: "new_servicer", Type: Type, Err: err, Pairs: pairs}
 		}
 	}()
 
@@ -86,21 +88,30 @@ func newServicer(pairs ...*types.Pair) (srv *Service, err error) {
 	if err != nil {
 		return nil, err
 	}
-	primaryURL, _ := url.Parse(opt.Endpoint.Value().String())
 
-	credProtocol, credValue := opt.Credential.Protocol(), opt.Credential.Value()
-	if credProtocol != credential.ProtocolHmac {
+	ep, err := endpoint.Parse(opt.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	primaryURL, _ := url.Parse(ep.String())
+
+	cred, err := credential.Parse(opt.Credential)
+	if err != nil {
+		return nil, err
+	}
+	if cred.Protocol() != credential.ProtocolHmac {
 		return nil, services.NewPairUnsupportedError(ps.WithCredential(opt.Credential))
 	}
 
-	cred, err := azblob.NewSharedKeyCredential(credValue[0], credValue[1])
+	credValue, err := azblob.NewSharedKeyCredential(cred.Hmac())
 	if err != nil {
 		return nil, err
 	}
 
 	httpClient := httpclient.New(opt.HTTPClientOptions)
 
-	p := azblob.NewPipeline(cred, azblob.PipelineOptions{
+	p := azblob.NewPipeline(credValue, azblob.PipelineOptions{
 		HTTPSender: pipeline.FactoryFunc(func(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.PolicyFunc {
 			return func(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
 				r, err := httpClient.Do(request.WithContext(ctx))
@@ -126,10 +137,10 @@ func newServicer(pairs ...*types.Pair) (srv *Service, err error) {
 	return srv, nil
 }
 
-func newServicerAndStorager(pairs ...*types.Pair) (srv *Service, store *Storage, err error) {
+func newServicerAndStorager(pairs ...typ.Pair) (srv *Service, store *Storage, err error) {
 	defer func() {
 		if err != nil {
-			err = &services.InitError{Op: services.OpNewStorager, Type: Type, Err: err, Pairs: pairs}
+			err = &services.InitError{Op: "new_storager", Type: Type, Err: err, Pairs: pairs}
 		}
 	}()
 
@@ -182,7 +193,7 @@ func formatError(err error) error {
 }
 
 // newStorage will create a new client.
-func (s *Service) newStorage(pairs ...*types.Pair) (st *Storage, err error) {
+func (s *Service) newStorage(pairs ...typ.Pair) (st *Storage, err error) {
 	opt, err := parsePairStorageNew(pairs)
 	if err != nil {
 		return nil, err
@@ -241,41 +252,34 @@ func (s *Storage) formatError(op string, err error, path ...string) error {
 	}
 }
 
-func (s *Storage) formatFileObject(v azblob.BlobItem) (o *types.Object, err error) {
-	o = &types.Object{
-		ID:         v.Name,
-		Name:       s.getRelPath(v.Name),
-		Type:       types.ObjectTypeFile,
-		UpdatedAt:  v.Properties.LastModified,
-		ObjectMeta: info.NewObjectMeta(),
-	}
+func (s *Storage) formatFileObject(v azblob.BlobItem) (o *typ.Object, err error) {
+	o = s.newObject(false)
+	o.ID = v.Name
+	o.Path = s.getRelPath(v.Name)
+	o.Mode |= typ.ModeRead
 
-	o.SetETag(string(v.Properties.Etag))
+	o.SetLastModified(v.Properties.LastModified)
+	o.SetEtag(string(v.Properties.Etag))
 
 	if v.Properties.ContentLength != nil {
-		o.Size = *v.Properties.ContentLength
+		o.SetContentLength(*v.Properties.ContentLength)
 	}
 	if v.Properties.ContentType != nil && *v.Properties.ContentType != "" {
 		o.SetContentType(*v.Properties.ContentType)
 	}
 	if len(v.Properties.ContentMD5) > 0 {
-		o.SetContentMD5(base64.StdEncoding.EncodeToString(v.Properties.ContentMD5))
+		o.SetContentMd5(base64.StdEncoding.EncodeToString(v.Properties.ContentMD5))
 	}
+
+	sm := make(map[string]string)
 	if value := v.Properties.AccessTier; value != "" {
-		setStorageClass(o.ObjectMeta, StorageClass(value))
+		sm[MetadataAccessTier] = string(value)
 	}
+	o.SetServiceMetadata(sm)
 
 	return o, nil
 }
 
-func (s *Storage) formatDirObject(v azblob.BlobPrefix) (o *types.Object) {
-	o = &types.Object{
-		ID:         v.Name,
-		Name:       s.getRelPath(v.Name),
-		Type:       types.ObjectTypeDir,
-		Size:       0,
-		ObjectMeta: info.NewObjectMeta(),
-	}
-
-	return o
+func (s *Storage) newObject(done bool) *typ.Object {
+	return typ.NewObject(s, done)
 }

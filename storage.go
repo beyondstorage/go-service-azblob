@@ -3,15 +3,16 @@ package azblob
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"io"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
-	"github.com/aos-dev/go-storage/v2/pkg/iowrap"
-	"github.com/aos-dev/go-storage/v2/types"
-	"github.com/aos-dev/go-storage/v2/types/info"
+
+	"github.com/aos-dev/go-storage/v3/pkg/iowrap"
+	. "github.com/aos-dev/go-storage/v3/types"
 )
 
-func (s *Storage) delete(ctx context.Context, path string, opt *pairStorageDelete) (err error) {
+func (s *Storage) delete(ctx context.Context, path string, opt pairStorageDelete) (err error) {
 	rp := s.getAbsPath(path)
 
 	_, err = s.bucket.NewBlockBlobURL(rp).Delete(ctx,
@@ -21,83 +22,101 @@ func (s *Storage) delete(ctx context.Context, path string, opt *pairStorageDelet
 	}
 	return nil
 }
-func (s *Storage) listDir(ctx context.Context, dir string, opt *pairStorageListDir) (err error) {
-	rp := s.getAbsPath(dir)
 
-	marker := azblob.Marker{}
-
-	var output *azblob.ListBlobsHierarchySegmentResponse
-	for {
-		output, err = s.bucket.ListBlobsHierarchySegment(ctx, marker, "/", azblob.ListBlobsSegmentOptions{
-			Prefix: rp,
-		})
-		if err != nil {
-			return err
-		}
-
-		if opt.HasDirFunc {
-			for _, v := range output.Segment.BlobPrefixes {
-				o := s.formatDirObject(v)
-
-				opt.DirFunc(o)
-			}
-		}
-
-		if opt.HasFileFunc {
-			for _, v := range output.Segment.BlobItems {
-				o, err := s.formatFileObject(v)
-				if err != nil {
-					return err
-				}
-
-				opt.FileFunc(o)
-			}
-		}
-
-		marker = output.NextMarker
-		if !marker.NotDone() {
-			break
-		}
+func (s *Storage) list(ctx context.Context, path string, opt pairStorageList) (oi *ObjectIterator, err error) {
+	input := &objectPageStatus{
+		maxResults: 200,
+		prefix:     s.getAbsPath(path),
 	}
-	return
-}
-func (s *Storage) listPrefix(ctx context.Context, prefix string, opt *pairStorageListPrefix) (err error) {
-	rp := s.getAbsPath(prefix)
 
-	marker := azblob.Marker{}
+	var nextFn NextObjectFunc
 
-	var output *azblob.ListBlobsFlatSegmentResponse
-	for {
-		output, err = s.bucket.ListBlobsFlatSegment(ctx, marker, azblob.ListBlobsSegmentOptions{
-			Prefix: rp,
-		})
-		if err != nil {
-			return err
-		}
-
-		for _, v := range output.Segment.BlobItems {
-			o, err := s.formatFileObject(v)
-			if err != nil {
-				return err
-			}
-
-			opt.ObjectFunc(o)
-		}
-
-		marker = output.NextMarker
-		if !marker.NotDone() {
-			break
-		}
+	switch {
+	case opt.ListMode.IsDir():
+		input.delimiter = "/"
+		nextFn = s.nextObjectPageByDir
+	case opt.ListMode.IsPrefix():
+		nextFn = s.nextObjectPageByPrefix
+	default:
+		return nil, fmt.Errorf("invalid list mode")
 	}
-	return
+
+	return NewObjectIterator(ctx, nextFn, input), nil
 }
-func (s *Storage) metadata(ctx context.Context, opt *pairStorageMetadata) (meta info.StorageMeta, err error) {
-	meta = info.NewStorageMeta()
+
+func (s *Storage) metadata(ctx context.Context, opt pairStorageMetadata) (meta *StorageMeta, err error) {
+	meta = NewStorageMeta()
 	meta.Name = s.name
 	meta.WorkDir = s.workDir
 	return meta, nil
 }
-func (s *Storage) read(ctx context.Context, path string, opt *pairStorageRead) (rc io.ReadCloser, err error) {
+
+func (s *Storage) nextObjectPageByDir(ctx context.Context, page *ObjectPage) error {
+	input := page.Status.(*objectPageStatus)
+
+	output, err := s.bucket.ListBlobsHierarchySegment(ctx, input.marker, input.delimiter, azblob.ListBlobsSegmentOptions{
+		Prefix:     input.prefix,
+		MaxResults: input.maxResults,
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, v := range output.Segment.BlobPrefixes {
+		o := s.newObject(true)
+		o.ID = v.Name
+		o.Path = s.getRelPath(v.Name)
+		o.Mode |= ModeDir
+
+		page.Data = append(page.Data, o)
+	}
+
+	for _, v := range output.Segment.BlobItems {
+		o, err := s.formatFileObject(v)
+		if err != nil {
+			return err
+		}
+
+		page.Data = append(page.Data, o)
+	}
+
+	if !output.NextMarker.NotDone() {
+		return IterateDone
+	}
+
+	input.marker = output.NextMarker
+	return nil
+}
+
+func (s *Storage) nextObjectPageByPrefix(ctx context.Context, page *ObjectPage) error {
+	input := page.Status.(*objectPageStatus)
+
+	output, err := s.bucket.ListBlobsFlatSegment(ctx, input.marker, azblob.ListBlobsSegmentOptions{
+		Prefix:     input.prefix,
+		MaxResults: input.maxResults,
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, v := range output.Segment.BlobItems {
+		o, err := s.formatFileObject(v)
+		if err != nil {
+			return err
+		}
+
+		page.Data = append(page.Data, o)
+	}
+
+	if !output.NextMarker.NotDone() {
+		return IterateDone
+	}
+
+	input.marker = output.NextMarker
+	return nil
+}
+
+func (s *Storage) read(ctx context.Context, path string, w io.Writer, opt pairStorageRead) (n int64, err error) {
 	rp := s.getAbsPath(path)
 
 	offset := int64(0)
@@ -112,16 +131,24 @@ func (s *Storage) read(ctx context.Context, path string, opt *pairStorageRead) (
 
 	output, err := s.bucket.NewBlockBlobURL(rp).Download(ctx, offset, count, azblob.BlobAccessConditions{}, false)
 	if err != nil {
-		return nil, err
+		return 0, err
+	}
+	defer func() {
+		cerr := output.Response().Body.Close()
+		if cerr != nil {
+			err = cerr
+		}
+	}()
+
+	rc := output.Response().Body
+	if opt.HasIoCallback {
+		rc = iowrap.CallbackReadCloser(rc, opt.IoCallback)
 	}
 
-	rc = output.Response().Body
-	if opt.HasReadCallbackFunc {
-		rc = iowrap.CallbackReadCloser(rc, opt.ReadCallbackFunc)
-	}
-	return rc, nil
+	return io.Copy(w, rc)
 }
-func (s *Storage) stat(ctx context.Context, path string, opt *pairStorageStat) (o *types.Object, err error) {
+
+func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o *Object, err error) {
 	rp := s.getAbsPath(path)
 
 	output, err := s.bucket.NewBlockBlobURL(rp).GetProperties(ctx, azblob.BlobAccessConditions{})
@@ -129,42 +156,45 @@ func (s *Storage) stat(ctx context.Context, path string, opt *pairStorageStat) (
 		return nil, err
 	}
 
-	o = &types.Object{
-		ID:         rp,
-		Name:       path,
-		Type:       types.ObjectTypeFile,
-		Size:       output.ContentLength(),
-		UpdatedAt:  output.LastModified(),
-		ObjectMeta: info.NewObjectMeta(),
-	}
+	o = s.newObject(true)
+	o.ID = rp
+	o.Path = path
+	o.Mode |= ModeRead
+
+	o.SetContentLength(output.ContentLength())
+	o.SetLastModified(output.LastModified())
 
 	if v := string(output.ETag()); v != "" {
-		o.SetETag(v)
+		o.SetEtag(v)
 	}
 	if v := output.ContentType(); v != "" {
 		o.SetContentType(v)
 	}
 	if v := output.ContentMD5(); len(v) > 0 {
-		o.SetContentMD5(base64.StdEncoding.EncodeToString(v))
+		o.SetContentMd5(base64.StdEncoding.EncodeToString(v))
 	}
-	if v := StorageClass(output.AccessTier()); v != "" {
-		setStorageClass(o.ObjectMeta, v)
+
+	sm := make(map[string]string)
+	if v := output.AccessTier(); v != "" {
+		sm[MetadataAccessTier] = v
 	}
+	o.SetServiceMetadata(sm)
 
 	return o, nil
 }
-func (s *Storage) write(ctx context.Context, path string, r io.Reader, opt *pairStorageWrite) (err error) {
+
+func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int64, opt pairStorageWrite) (n int64, err error) {
 	rp := s.getAbsPath(path)
 
-	if opt.HasReadCallbackFunc {
-		r = iowrap.CallbackReader(r, opt.ReadCallbackFunc)
+	if opt.HasIoCallback {
+		r = iowrap.CallbackReader(r, opt.IoCallback)
 	}
 
 	// TODO: add checksum and storage class support.
-	_, err = s.bucket.NewBlockBlobURL(rp).Upload(ctx, iowrap.SizedReadSeekCloser(r, opt.Size),
+	_, err = s.bucket.NewBlockBlobURL(rp).Upload(ctx, iowrap.SizedReadSeekCloser(r, size),
 		azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return size, nil
 }
