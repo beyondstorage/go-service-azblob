@@ -77,8 +77,6 @@ type pairServiceNew struct {
 	DefaultServicePairs    DefaultServicePairs
 	HasHTTPClientOptions   bool
 	HTTPClientOptions      *httpclient.Options
-	HasPairPolicy          bool
-	PairPolicy             PairPolicy
 	// Generated pairs
 }
 
@@ -116,12 +114,6 @@ func parsePairServiceNew(opts []Pair) (pairServiceNew, error) {
 			}
 			result.HasHTTPClientOptions = true
 			result.HTTPClientOptions = v.Value.(*httpclient.Options)
-		case "pair_policy":
-			if result.HasPairPolicy {
-				continue
-			}
-			result.HasPairPolicy = true
-			result.PairPolicy = v.Value.(PairPolicy)
 			// Generated pairs
 		}
 	}
@@ -366,6 +358,8 @@ type pairStorageNew struct {
 	// Optional pairs
 	HasDefaultStoragePairs bool
 	DefaultStoragePairs    DefaultStoragePairs
+	HasPairPolicy          bool
+	PairPolicy             PairPolicy
 	HasWorkDir             bool
 	WorkDir                string
 	// Generated pairs
@@ -393,6 +387,12 @@ func parsePairStorageNew(opts []Pair) (pairStorageNew, error) {
 			}
 			result.HasDefaultStoragePairs = true
 			result.DefaultStoragePairs = v.Value.(DefaultStoragePairs)
+		case "pair_policy":
+			if result.HasPairPolicy {
+				continue
+			}
+			result.HasPairPolicy = true
+			result.PairPolicy = v.Value.(PairPolicy)
 		case "work_dir":
 			if result.HasWorkDir {
 				continue

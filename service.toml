@@ -4,11 +4,11 @@ name = "azblob"
 
 [namespace.service.new]
 required = ["credential", "endpoint"]
-optional = ["default_service_pairs", "http_client_options", "pair_policy"]
+optional = ["default_service_pairs", "http_client_options"]
 
 [namespace.storage.new]
 required = ["name"]
-optional = ["default_storage_pairs", "work_dir"]
+optional = ["default_storage_pairs", "pair_policy", "work_dir"]
 
 [namespace.storage.op.list]
 optional = ["list_mode"]

@@ -137,6 +137,9 @@ func newServicer(pairs ...typ.Pair) (srv *Service, err error) {
 	})
 	srv.service = azblob.NewServiceURL(*primaryURL, p)
 
+	if opt.HasDefaultServicePairs {
+		srv.defaultPairs = opt.DefaultServicePairs
+	}
 	return srv, nil
 }
 
@@ -209,6 +212,14 @@ func (s *Service) newStorage(pairs ...typ.Pair) (st *Storage, err error) {
 
 		name:    opt.Name,
 		workDir: "/",
+	}
+
+	if opt.HasDefaultStoragePairs {
+		st.defaultPairs = opt.DefaultStoragePairs
+	}
+
+	if opt.HasPairPolicy {
+		st.pairPolicy = opt.PairPolicy
 	}
 
 	if opt.HasWorkDir {
