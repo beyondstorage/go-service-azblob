@@ -25,6 +25,10 @@ const Type = "azblob"
 const (
 	// AccessTier
 	pairAccessTier = "azblob_access_tier"
+	// DefaultServicePairs set default pairs for service actions
+	pairDefaultServicePairs = "azblob_default_service_pairs"
+	// DefaultStoragePairs set default pairs for storager actions
+	pairDefaultStoragePairs = "azblob_default_storage_pairs"
 )
 
 // Service available metadata.
@@ -41,6 +45,24 @@ func WithAccessTier(v string) Pair {
 	}
 }
 
+// WithDefaultServicePairs will apply default_service_pairs value to Options
+// DefaultServicePairs set default pairs for service actions
+func WithDefaultServicePairs(v DefaultServicePairs) Pair {
+	return Pair{
+		Key:   pairDefaultServicePairs,
+		Value: v,
+	}
+}
+
+// WithDefaultStoragePairs will apply default_storage_pairs value to Options
+// DefaultStoragePairs set default pairs for storager actions
+func WithDefaultStoragePairs(v DefaultStoragePairs) Pair {
+	return Pair{
+		Key:   pairDefaultStoragePairs,
+		Value: v,
+	}
+}
+
 // pairServiceNew is the parsed struct
 type pairServiceNew struct {
 	pairs []Pair
@@ -51,10 +73,10 @@ type pairServiceNew struct {
 	HasEndpoint   bool
 	Endpoint      string
 	// Optional pairs
-	HasHTTPClientOptions bool
-	HTTPClientOptions    *httpclient.Options
-	HasPairPolicy        bool
-	PairPolicy           PairPolicy
+	HasDefaultServicePairs bool
+	DefaultServicePairs    DefaultServicePairs
+	HasHTTPClientOptions   bool
+	HTTPClientOptions      *httpclient.Options
 	// Generated pairs
 }
 
@@ -68,18 +90,30 @@ func parsePairServiceNew(opts []Pair) (pairServiceNew, error) {
 		switch v.Key {
 		// Required pairs
 		case "credential":
+			if result.HasCredential {
+				continue
+			}
 			result.HasCredential = true
 			result.Credential = v.Value.(string)
 		case "endpoint":
+			if result.HasEndpoint {
+				continue
+			}
 			result.HasEndpoint = true
 			result.Endpoint = v.Value.(string)
 		// Optional pairs
+		case pairDefaultServicePairs:
+			if result.HasDefaultServicePairs {
+				continue
+			}
+			result.HasDefaultServicePairs = true
+			result.DefaultServicePairs = v.Value.(DefaultServicePairs)
 		case "http_client_options":
+			if result.HasHTTPClientOptions {
+				continue
+			}
 			result.HasHTTPClientOptions = true
 			result.HTTPClientOptions = v.Value.(*httpclient.Options)
-		case "pair_policy":
-			result.HasPairPolicy = true
-			result.PairPolicy = v.Value.(PairPolicy)
 			// Generated pairs
 		}
 	}
@@ -91,6 +125,14 @@ func parsePairServiceNew(opts []Pair) (pairServiceNew, error) {
 	}
 
 	return result, nil
+}
+
+// DefaultServicePairs is default pairs for specific action
+type DefaultServicePairs struct {
+	Create []Pair
+	Delete []Pair
+	Get    []Pair
+	List   []Pair
 }
 
 // pairServiceCreate is the parsed struct
@@ -226,6 +268,7 @@ func (s *Service) CreateWithContext(ctx context.Context, name string, pairs ...P
 	defer func() {
 		err = s.formatError("create", err, name)
 	}()
+	pairs = append(pairs, s.defaultPairs.Create...)
 	var opt pairServiceCreate
 	opt, err = s.parsePairServiceCreate(pairs)
 	if err != nil {
@@ -248,6 +291,7 @@ func (s *Service) DeleteWithContext(ctx context.Context, name string, pairs ...P
 	defer func() {
 		err = s.formatError("delete", err, name)
 	}()
+	pairs = append(pairs, s.defaultPairs.Delete...)
 	var opt pairServiceDelete
 	opt, err = s.parsePairServiceDelete(pairs)
 	if err != nil {
@@ -270,6 +314,7 @@ func (s *Service) GetWithContext(ctx context.Context, name string, pairs ...Pair
 	defer func() {
 		err = s.formatError("get", err, name)
 	}()
+	pairs = append(pairs, s.defaultPairs.Get...)
 	var opt pairServiceGet
 	opt, err = s.parsePairServiceGet(pairs)
 	if err != nil {
@@ -293,6 +338,7 @@ func (s *Service) ListWithContext(ctx context.Context, pairs ...Pair) (sti *Stor
 
 		err = s.formatError("list", err, "")
 	}()
+	pairs = append(pairs, s.defaultPairs.List...)
 	var opt pairServiceList
 	opt, err = s.parsePairServiceList(pairs)
 	if err != nil {
@@ -310,8 +356,12 @@ type pairStorageNew struct {
 	HasName bool
 	Name    string
 	// Optional pairs
-	HasWorkDir bool
-	WorkDir    string
+	HasDefaultStoragePairs bool
+	DefaultStoragePairs    DefaultStoragePairs
+	HasPairPolicy          bool
+	PairPolicy             PairPolicy
+	HasWorkDir             bool
+	WorkDir                string
 	// Generated pairs
 }
 
@@ -325,10 +375,28 @@ func parsePairStorageNew(opts []Pair) (pairStorageNew, error) {
 		switch v.Key {
 		// Required pairs
 		case "name":
+			if result.HasName {
+				continue
+			}
 			result.HasName = true
 			result.Name = v.Value.(string)
 		// Optional pairs
+		case pairDefaultStoragePairs:
+			if result.HasDefaultStoragePairs {
+				continue
+			}
+			result.HasDefaultStoragePairs = true
+			result.DefaultStoragePairs = v.Value.(DefaultStoragePairs)
+		case "pair_policy":
+			if result.HasPairPolicy {
+				continue
+			}
+			result.HasPairPolicy = true
+			result.PairPolicy = v.Value.(PairPolicy)
 		case "work_dir":
+			if result.HasWorkDir {
+				continue
+			}
 			result.HasWorkDir = true
 			result.WorkDir = v.Value.(string)
 			// Generated pairs
@@ -339,6 +407,16 @@ func parsePairStorageNew(opts []Pair) (pairStorageNew, error) {
 	}
 
 	return result, nil
+}
+
+// DefaultStoragePairs is default pairs for specific action
+type DefaultStoragePairs struct {
+	Delete   []Pair
+	List     []Pair
+	Metadata []Pair
+	Read     []Pair
+	Stat     []Pair
+	Write    []Pair
 }
 
 // pairStorageDelete is the parsed struct
@@ -586,6 +664,7 @@ func (s *Storage) DeleteWithContext(ctx context.Context, path string, pairs ...P
 	defer func() {
 		err = s.formatError("delete", err, path)
 	}()
+	pairs = append(pairs, s.defaultPairs.Delete...)
 	var opt pairStorageDelete
 	opt, err = s.parsePairStorageDelete(pairs)
 	if err != nil {
@@ -608,6 +687,7 @@ func (s *Storage) ListWithContext(ctx context.Context, path string, pairs ...Pai
 	defer func() {
 		err = s.formatError("list", err, path)
 	}()
+	pairs = append(pairs, s.defaultPairs.List...)
 	var opt pairStorageList
 	opt, err = s.parsePairStorageList(pairs)
 	if err != nil {
@@ -630,6 +710,7 @@ func (s *Storage) MetadataWithContext(ctx context.Context, pairs ...Pair) (meta 
 	defer func() {
 		err = s.formatError("metadata", err)
 	}()
+	pairs = append(pairs, s.defaultPairs.Metadata...)
 	var opt pairStorageMetadata
 	opt, err = s.parsePairStorageMetadata(pairs)
 	if err != nil {
@@ -652,6 +733,7 @@ func (s *Storage) ReadWithContext(ctx context.Context, path string, w io.Writer,
 	defer func() {
 		err = s.formatError("read", err, path)
 	}()
+	pairs = append(pairs, s.defaultPairs.Read...)
 	var opt pairStorageRead
 	opt, err = s.parsePairStorageRead(pairs)
 	if err != nil {
@@ -674,6 +756,7 @@ func (s *Storage) StatWithContext(ctx context.Context, path string, pairs ...Pai
 	defer func() {
 		err = s.formatError("stat", err, path)
 	}()
+	pairs = append(pairs, s.defaultPairs.Stat...)
 	var opt pairStorageStat
 	opt, err = s.parsePairStorageStat(pairs)
 	if err != nil {
@@ -696,6 +779,7 @@ func (s *Storage) WriteWithContext(ctx context.Context, path string, r io.Reader
 	defer func() {
 		err = s.formatError("write", err, path)
 	}()
+	pairs = append(pairs, s.defaultPairs.Write...)
 	var opt pairStorageWrite
 	opt, err = s.parsePairStorageWrite(pairs)
 	if err != nil {
