@@ -12,7 +12,6 @@ github.com/Azure/go-autorest/autorest/mocks v0.4.1 h1:K0laFcLE6VLTOwNgSxaGbUcLPu
 github.com/Azure/go-autorest/autorest/mocks v0.4.1/go.mod h1:LTp+uSrOhSkaKrUy935gNZuuIPPVsHlr9DSOxSayd+k=
 github.com/Azure/go-autorest/tracing v0.6.0 h1:TYi4+3m5t6K48TGI9AUdb+IzbnSxvnvUMfuitfgcfuo=
 github.com/Azure/go-autorest/tracing v0.6.0/go.mod h1:+vhtPC754Xsa23ID7GlGsrdKBpUA79WCAKPPZVC2DeU=
-github.com/Xuanwo/serde-go v0.0.0-20210114073644-14feecd1c570/go.mod h1:xKYVt5O0411/+U9vNQ+cfCvVve4D5pgNvNVhQJRiOwE=
 github.com/Xuanwo/templateutils v0.0.0-20201019101431-c73b871118f2 h1:ydpBZm38sXcYOVKjmfYOy66UneSh/brXGS3LQrTvaAc=
 github.com/Xuanwo/templateutils v0.0.0-20201019101431-c73b871118f2/go.mod h1:x0qS7gfgEm24b8V9U+0zBEBAu/VpxZhO/+EWtpgEgDw=
 github.com/Xuanwo/templateutils v0.0.0-20201216100309-46f73cd4e4b1 h1:SQ8kQujQ0yl39YBMU0xZ+yyfxx/qSWfGWlCPNzHp5kw=
@@ -20,8 +19,8 @@ github.com/Xuanwo/templateutils v0.0.0-20201216100309-46f73cd4e4b1/go.mod h1:x0q
 github.com/aos-dev/go-integration-test/v3 v3.0.0-20210205075620-0b779f4b3afc h1:s8BQqJwWe2yoTGJFOsIxnkwwMsnDqMgkO39yzEP4smw=
 github.com/aos-dev/go-integration-test/v3 v3.0.0-20210205075620-0b779f4b3afc/go.mod h1:2VqxZhJVvI1jKTTERWHfCBMZQaJt10xoEJ+CxbfYZlo=
 github.com/aos-dev/go-storage/v3 v3.0.1-0.20210205074802-e8a5b22166c2/go.mod h1:JznhvyhPDnETfZ3RyWm3mT/S5ic+uuYFWagSIkUZujc=
-github.com/aos-dev/go-storage/v3 v3.1.1-0.20210222071453-eaf4265c2c17 h1:tBOF79EAL3Hq8t/zG8aAIrWowt3GAd6GmQ1NvHyvLww=
-github.com/aos-dev/go-storage/v3 v3.1.1-0.20210222071453-eaf4265c2c17/go.mod h1:jVOr6tLLuOVMMyF0R4tfiAi3Jsby71eAhniPLvjzXBU=
+github.com/aos-dev/go-storage/v3 v3.2.0 h1:PXAqF4lhmTQ9m1F63v6oiHjCV1BRtugHrXd51SuXk6E=
+github.com/aos-dev/go-storage/v3 v3.2.0/go.mod h1:sKmR8rfqTYm2mMS7Z6rMvlM45fpLEbKOXZUglws0yuM=
 github.com/aos-dev/specs/go v0.0.0-20210205073047-af8ef94af73d h1:NKktDzsApKM0VtGkDkJHr6fPHbQjHw7BpR8UxeCUNLs=
 github.com/aos-dev/specs/go v0.0.0-20210205073047-af8ef94af73d/go.mod h1:XTNlLZtPA1inITyDH5hNnQXVjvvKUvo+lurs5GYB8NA=
 github.com/dave/dst v0.26.2 h1:lnxLAKI3tx7MgLNVDirFCsDTlTG9nKTk7GcptKcWSwY=
@@ -37,6 +36,8 @@ github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumC
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/golang/mock v1.4.4 h1:l75CXGRSwbaYNpl/Z2X1XIIAMSCquvXgpVZDhwEIJsc=
 github.com/golang/mock v1.4.4/go.mod h1:l3mdAwkq5BuhzHwde/uurv3sEJeZMXNpwsxVWU71h+4=
+github.com/golang/mock v1.5.0 h1:jlYHihg//f7RRwuPfptm04yp4s7O6Kw8EZiVYIGcH0g=
+github.com/golang/mock v1.5.0/go.mod h1:CWnOUgYIOo4TcNZ0wHX3YZCqsaM1I1Jvs6v3mP3KVu8=
 github.com/google/pprof v0.0.0-20181127221834-b4f47329b966/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
 github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
