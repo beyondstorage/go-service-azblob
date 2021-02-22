@@ -23,6 +23,8 @@ import (
 // Service is the azblob config.
 type Service struct {
 	service azblob.ServiceURL
+
+	defaultPairs DefaultServicePairs
 }
 
 // String implements Servicer.String
@@ -37,7 +39,8 @@ type Storage struct {
 	name    string
 	workDir string
 
-	pairPolicy typ.PairPolicy
+	defaultPairs DefaultStoragePairs
+	pairPolicy   typ.PairPolicy
 }
 
 // String implements Storager.String
