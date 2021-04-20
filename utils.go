@@ -25,6 +25,8 @@ type Service struct {
 	service azblob.ServiceURL
 
 	defaultPairs DefaultServicePairs
+
+	typ.UnimplementedServicer
 }
 
 // String implements Servicer.String
@@ -41,6 +43,8 @@ type Storage struct {
 
 	defaultPairs DefaultStoragePairs
 	pairPolicy   typ.PairPolicy
+
+	typ.UnimplementedStorager
 }
 
 // String implements Storager.String
