@@ -24,7 +24,7 @@ generate:
 	go generate ./...
 	go fmt ./...
 
-build: generate tidy check
+build: tidy generate check
 	go build ./...
 
 test:
@@ -33,7 +33,7 @@ test:
 
 integration_test:
 	go clean -testcache ./tests
-	go test -tags integration_test -race -covermode=atomic -v ./tests
+	go test -race -covermode=atomic -v ./tests
 
 tidy:
 	go mod tidy

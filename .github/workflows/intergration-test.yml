@@ -22,6 +22,7 @@ jobs:
 
       - name: Test
         env:
+          STORAGE_AZBLOB_INTEGRATION_TEST: ${{ secrets.STORAGE_INTEGRATION_TEST }}
           STORAGE_AZBLOB_CREDENTIAL: ${{ secrets.STORAGE_AZBLOB_CREDENTIAL }}
           STORAGE_AZBLOB_NAME: ${{ secrets.STORAGE_AZBLOB_NAME }}
           STORAGE_AZBLOB_ENDPOINT: ${{ secrets.STORAGE_AZBLOB_ENDPOINT }}
