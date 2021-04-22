@@ -20,9 +20,13 @@ github.com/aos-dev/go-integration-test/v3 v3.0.0-20210205075620-0b779f4b3afc/go.
 github.com/aos-dev/go-storage/v3 v3.0.1-0.20210205074802-e8a5b22166c2/go.mod h1:JznhvyhPDnETfZ3RyWm3mT/S5ic+uuYFWagSIkUZujc=
 github.com/aos-dev/go-storage/v3 v3.4.3-0.20210417162535-67db0dd18784 h1:eeKDDn+8RPtYuk7lrQC48OtTNeSRF/l9P5YHa/Q3omk=
 github.com/aos-dev/go-storage/v3 v3.4.3-0.20210417162535-67db0dd18784/go.mod h1:PZJT0Ta7YxVM5QoYoh8Q/X4I6e/z/7gOJqm85Aib4nY=
+github.com/aos-dev/go-storage/v3 v3.5.1-0.20210422060150-bc0fae4c3fa7 h1:YirUP3+06blEpQ/o6VT0RXRf5ystxNB91iaYgO0SoWM=
+github.com/aos-dev/go-storage/v3 v3.5.1-0.20210422060150-bc0fae4c3fa7/go.mod h1:JFshvl851ZDDXtFGWDFKqkg34QEPH0xuhLJ2LjikZYc=
 github.com/aos-dev/specs/go v0.0.0-20210205073047-af8ef94af73d/go.mod h1:XTNlLZtPA1inITyDH5hNnQXVjvvKUvo+lurs5GYB8NA=
 github.com/aos-dev/specs/go v0.0.0-20210312090615-23109627848b h1:qIehSnBbr31ATAckM9u9h6gSz+9PkGqu79vTngx6wPw=
 github.com/aos-dev/specs/go v0.0.0-20210312090615-23109627848b/go.mod h1:XTNlLZtPA1inITyDH5hNnQXVjvvKUvo+lurs5GYB8NA=
+github.com/aos-dev/specs/go v0.0.0-20210420062803-1a60efa2eae3 h1:LiW0Ki0Gw6opu11JwMhxWw5M+V6I9JypJ5eAIp+Rqt4=
+github.com/aos-dev/specs/go v0.0.0-20210420062803-1a60efa2eae3/go.mod h1:gNah3KaPJEfysh7uCCX+sYjQC3g2yx2VgBkFlT945Ws=
 github.com/dave/dst v0.26.2 h1:lnxLAKI3tx7MgLNVDirFCsDTlTG9nKTk7GcptKcWSwY=
 github.com/dave/dst v0.26.2/go.mod h1:UMDJuIRPfyUCC78eFuB+SV/WI8oDeyFDvM/JR6NI3IU=
 github.com/dave/gopackages v0.0.0-20170318123100-46e7023ec56e/go.mod h1:i00+b/gKdIDIxuLDFob7ustLAVqhsZRk2qVZrArELGQ=
@@ -58,6 +62,8 @@ github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWb
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/pelletier/go-toml v1.8.1 h1:1Nf83orprkJyknT6h7zbuEGUEjcyVlCxSUGTENmNCRM=
 github.com/pelletier/go-toml v1.8.1/go.mod h1:T2/BmBdy8dvIRq1a/8aqjN41wvWlN4lrapLU/GW4pbc=
+github.com/pelletier/go-toml v1.9.0 h1:NOd0BRdOKpPf0SxkL3HxSQOG7rNh+4kl6PHcBPFs7Q0=
+github.com/pelletier/go-toml v1.9.0/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

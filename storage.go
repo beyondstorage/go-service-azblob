@@ -137,9 +137,13 @@ func (s *Storage) read(ctx context.Context, path string, w io.Writer, opt pairSt
 		count = opt.Size
 	}
 
+	cpk, err := calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
+	if err != nil {
+		return 0, err
+	}
 	output, err := s.bucket.NewBlockBlobURL(rp).Download(
 		ctx, offset, count,
-		azblob.BlobAccessConditions{}, false, azblob.ClientProvidedKeyOptions{})
+		azblob.BlobAccessConditions{}, false, cpk)
 	if err != nil {
 		return 0, err
 	}
@@ -161,7 +165,12 @@ func (s *Storage) read(ctx context.Context, path string, w io.Writer, opt pairSt
 func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o *Object, err error) {
 	rp := s.getAbsPath(path)
 
-	output, err := s.bucket.NewBlockBlobURL(rp).GetProperties(ctx, azblob.BlobAccessConditions{}, azblob.ClientProvidedKeyOptions{})
+	cpk, err := calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
+	if err != nil {
+		return
+	}
+
+	output, err := s.bucket.NewBlockBlobURL(rp).GetProperties(ctx, azblob.BlobAccessConditions{}, cpk)
 	if err != nil {
 		return nil, err
 	}
@@ -187,6 +196,12 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 	sm := make(map[string]string)
 	if v := output.AccessTier(); v != "" {
 		sm[MetadataAccessTier] = v
+	}
+	if v := output.EncryptionKeySha256(); v != "" {
+		sm[MetadataEncryptionKeySha256] = v
+	}
+	if v := output.EncryptionScope(); v != "" {
+		sm[MetadataEncryptionScope] = v
 	}
 	o.SetServiceMetadata(sm)
 
@@ -216,11 +231,14 @@ func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int6
 		headers.ContentType = opt.ContentType
 	}
 
+	cpk, err := calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
+	if err != nil {
+		return 0, err
+	}
 	_, err = s.bucket.NewBlockBlobURL(rp).Upload(
 		ctx, iowrap.SizedReadSeekCloser(r, size),
 		headers, azblob.Metadata{}, azblob.BlobAccessConditions{},
-		accessTier, azblob.BlobTagsMap{}, azblob.ClientProvidedKeyOptions{},
-	)
+		accessTier, azblob.BlobTagsMap{}, cpk)
 	if err != nil {
 		return 0, err
 	}

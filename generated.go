@@ -29,11 +29,19 @@ const (
 	pairDefaultServicePairs = "azblob_default_service_pairs"
 	// DefaultStoragePairs set default pairs for storager actions
 	pairDefaultStoragePairs = "azblob_default_storage_pairs"
+	// EncryptionKey is the customer's 32-byte AES-256 key
+	pairEncryptionKey = "azblob_encryption_key"
+	// EncryptionScope Specifies the name of the encryption scope. See https://docs.microsoft.com/en-us/azure/storage/blobs/encryption-scope-overview for details.
+	pairEncryptionScope = "azblob_encryption_scope"
 )
 
 // Service available metadata.
 const (
 	MetadataAccessTier = "azblob-access-tier"
+
+	MetadataEncryptionKeySha256 = "azblob-encryption-key-sha256"
+
+	MetadataEncryptionScope = "azblob-encryption-scope"
 )
 
 // WithAccessTier will apply access_tier value to Options
@@ -59,6 +67,24 @@ func WithDefaultServicePairs(v DefaultServicePairs) Pair {
 func WithDefaultStoragePairs(v DefaultStoragePairs) Pair {
 	return Pair{
 		Key:   pairDefaultStoragePairs,
+		Value: v,
+	}
+}
+
+// WithEncryptionKey will apply encryption_key value to Options
+// EncryptionKey is the customer's 32-byte AES-256 key
+func WithEncryptionKey(v []byte) Pair {
+	return Pair{
+		Key:   pairEncryptionKey,
+		Value: v,
+	}
+}
+
+// WithEncryptionScope will apply encryption_scope value to Options
+// EncryptionScope Specifies the name of the encryption scope. See https://docs.microsoft.com/en-us/azure/storage/blobs/encryption-scope-overview for details.
+func WithEncryptionScope(v string) Pair {
+	return Pair{
+		Key:   pairEncryptionScope,
 		Value: v,
 	}
 }
@@ -567,12 +593,16 @@ type pairStorageRead struct {
 
 	// Required pairs
 	// Optional pairs
-	HasIoCallback bool
-	IoCallback    func([]byte)
-	HasOffset     bool
-	Offset        int64
-	HasSize       bool
-	Size          int64
+	HasEncryptionKey   bool
+	EncryptionKey      []byte
+	HasEncryptionScope bool
+	EncryptionScope    string
+	HasIoCallback      bool
+	IoCallback         func([]byte)
+	HasOffset          bool
+	Offset             int64
+	HasSize            bool
+	Size               int64
 	// Generated pairs
 }
 
@@ -586,6 +616,12 @@ func (s *Storage) parsePairStorageRead(opts []Pair) (pairStorageRead, error) {
 		switch v.Key {
 		// Required pairs
 		// Optional pairs
+		case pairEncryptionKey:
+			result.HasEncryptionKey = true
+			result.EncryptionKey = v.Value.([]byte)
+		case pairEncryptionScope:
+			result.HasEncryptionScope = true
+			result.EncryptionScope = v.Value.(string)
 		case "io_callback":
 			result.HasIoCallback = true
 			result.IoCallback = v.Value.(func([]byte))
@@ -614,6 +650,10 @@ type pairStorageStat struct {
 
 	// Required pairs
 	// Optional pairs
+	HasEncryptionKey   bool
+	EncryptionKey      []byte
+	HasEncryptionScope bool
+	EncryptionScope    string
 	// Generated pairs
 }
 
@@ -627,6 +667,12 @@ func (s *Storage) parsePairStorageStat(opts []Pair) (pairStorageStat, error) {
 		switch v.Key {
 		// Required pairs
 		// Optional pairs
+		case pairEncryptionKey:
+			result.HasEncryptionKey = true
+			result.EncryptionKey = v.Value.([]byte)
+		case pairEncryptionScope:
+			result.HasEncryptionScope = true
+			result.EncryptionScope = v.Value.(string)
 		// Generated pairs
 		default:
 
@@ -646,14 +692,18 @@ type pairStorageWrite struct {
 
 	// Required pairs
 	// Optional pairs
-	HasAccessTier  bool
-	AccessTier     string
-	HasContentMd5  bool
-	ContentMd5     string
-	HasContentType bool
-	ContentType    string
-	HasIoCallback  bool
-	IoCallback     func([]byte)
+	HasAccessTier      bool
+	AccessTier         string
+	HasContentMd5      bool
+	ContentMd5         string
+	HasContentType     bool
+	ContentType        string
+	HasEncryptionKey   bool
+	EncryptionKey      []byte
+	HasEncryptionScope bool
+	EncryptionScope    string
+	HasIoCallback      bool
+	IoCallback         func([]byte)
 	// Generated pairs
 }
 
@@ -676,6 +726,12 @@ func (s *Storage) parsePairStorageWrite(opts []Pair) (pairStorageWrite, error) {
 		case "content_type":
 			result.HasContentType = true
 			result.ContentType = v.Value.(string)
+		case pairEncryptionKey:
+			result.HasEncryptionKey = true
+			result.EncryptionKey = v.Value.([]byte)
+		case pairEncryptionScope:
+			result.HasEncryptionScope = true
+			result.EncryptionScope = v.Value.(string)
 		case "io_callback":
 			result.HasIoCallback = true
 			result.IoCallback = v.Value.(func([]byte))
