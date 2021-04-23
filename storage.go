@@ -137,9 +137,12 @@ func (s *Storage) read(ctx context.Context, path string, w io.Writer, opt pairSt
 		count = opt.Size
 	}
 
-	cpk, err := calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
-	if err != nil {
-		return 0, err
+	var cpk azblob.ClientProvidedKeyOptions
+	if opt.HasEncryptionKey {
+		cpk, err = calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
+		if err != nil {
+			return 0, err
+		}
 	}
 	output, err := s.bucket.NewBlockBlobURL(rp).Download(
 		ctx, offset, count,
@@ -165,9 +168,12 @@ func (s *Storage) read(ctx context.Context, path string, w io.Writer, opt pairSt
 func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o *Object, err error) {
 	rp := s.getAbsPath(path)
 
-	cpk, err := calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
-	if err != nil {
-		return
+	var cpk azblob.ClientProvidedKeyOptions
+	if opt.HasEncryptionKey {
+		cpk, err = calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
+		if err != nil {
+			return
+		}
 	}
 
 	output, err := s.bucket.NewBlockBlobURL(rp).GetProperties(ctx, azblob.BlobAccessConditions{}, cpk)
@@ -231,9 +237,12 @@ func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int6
 		headers.ContentType = opt.ContentType
 	}
 
-	cpk, err := calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
-	if err != nil {
-		return 0, err
+	var cpk azblob.ClientProvidedKeyOptions
+	if opt.HasEncryptionKey {
+		cpk, err = calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
+		if err != nil {
+			return 0, err
+		}
 	}
 	_, err = s.bucket.NewBlockBlobURL(rp).Upload(
 		ctx, iowrap.SizedReadSeekCloser(r, size),

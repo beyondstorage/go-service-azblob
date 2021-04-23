@@ -304,9 +304,6 @@ func (s *Storage) newObject(done bool) *typ.Object {
 }
 
 func calculateEncryptionHeaders(key []byte, scope string) (cpk azblob.ClientProvidedKeyOptions, err error) {
-	if key == nil {
-		return azblob.ClientProvidedKeyOptions{}, nil
-	}
 	if len(key) != 32 {
 		err = ErrInvalidEncryptionKey
 		return
