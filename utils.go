@@ -2,6 +2,7 @@ package azblob
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 
@@ -300,4 +301,21 @@ func (s *Storage) formatFileObject(v azblob.BlobItemInternal) (o *typ.Object, er
 
 func (s *Storage) newObject(done bool) *typ.Object {
 	return typ.NewObject(s, done)
+}
+
+func calculateEncryptionHeaders(key []byte, scope string) (cpk azblob.ClientProvidedKeyOptions, err error) {
+	if len(key) != 32 {
+		err = ErrInvalidEncryptionKey
+		return
+	}
+	keyBase64 := base64.StdEncoding.EncodeToString(key)
+	keySha256 := sha256.Sum256(key)
+	keySha256Base64 := base64.StdEncoding.EncodeToString(keySha256[:])
+	cpk = azblob.ClientProvidedKeyOptions{
+		EncryptionKey:       &keyBase64,
+		EncryptionKeySha256: &keySha256Base64,
+		EncryptionAlgorithm: "AES256",
+		EncryptionScope:     &scope,
+	}
+	return
 }
