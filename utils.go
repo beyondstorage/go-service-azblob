@@ -308,7 +308,7 @@ func calculateEncryptionHeaders(key []byte, scope string) (cpk azblob.ClientProv
 		return azblob.ClientProvidedKeyOptions{}, nil
 	}
 	if len(key) != 32 {
-		err = ErrInvalidEncryptionCustomerKey
+		err = ErrInvalidEncryptionKey
 		return
 	}
 	keyBase64 := base64.StdEncoding.EncodeToString(key)
