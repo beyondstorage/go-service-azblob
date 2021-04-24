@@ -290,9 +290,9 @@ func (s *Storage) formatFileObject(v azblob.BlobItemInternal) (o *typ.Object, er
 		o.SetContentMd5(base64.StdEncoding.EncodeToString(v.Properties.ContentMD5))
 	}
 
-	sm := make(map[string]string)
+	var sm ObjectMetadata
 	if value := v.Properties.AccessTier; value != "" {
-		sm[MetadataAccessTier] = string(value)
+		sm.AccessTier = string(value)
 	}
 	o.SetServiceMetadata(sm)
 
