@@ -35,14 +35,34 @@ const (
 	pairEncryptionScope = "azblob_encryption_scope"
 )
 
-// Service available metadata.
-const (
-	MetadataAccessTier = "azblob-access-tier"
+// ObjectMetadata stores service metadata for object.
+type ObjectMetadata struct {
+	// AccessTier
+	AccessTier string
+	// EncryptionKeySha256
+	EncryptionKeySha256 string
+	// EncryptionScope
+	EncryptionScope string
+}
 
-	MetadataEncryptionKeySha256 = "azblob-encryption-key-sha256"
+// GetObjectMetadata will get ObjectMetadata from Object.
+//
+// - This function should not be called by service implementer.
+// - The returning ObjectMetadata is read only and should not be modified.
+func GetObjectMetadata(o *Object) ObjectMetadata {
+	om, ok := o.GetServiceMetadata()
+	if ok {
+		return om.(ObjectMetadata)
+	}
+	return ObjectMetadata{}
+}
 
-	MetadataEncryptionScope = "azblob-encryption-scope"
-)
+// setObjectMetadata will set ObjectMetadata into Object.
+//
+// - This function should only be called once, please make sure all data has been written before set.
+func setObjectMetadata(o *Object, om ObjectMetadata) {
+	o.SetServiceMetadata(om)
+}
 
 // WithAccessTier will apply access_tier value to Options
 // AccessTier

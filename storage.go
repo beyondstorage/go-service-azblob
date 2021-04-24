@@ -199,15 +199,15 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 		o.SetContentMd5(base64.StdEncoding.EncodeToString(v))
 	}
 
-	sm := make(map[string]string)
+	var sm ObjectMetadata
 	if v := output.AccessTier(); v != "" {
-		sm[MetadataAccessTier] = v
+		sm.AccessTier = v
 	}
 	if v := output.EncryptionKeySha256(); v != "" {
-		sm[MetadataEncryptionKeySha256] = v
+		sm.EncryptionKeySha256 = v
 	}
 	if v := output.EncryptionScope(); v != "" {
-		sm[MetadataEncryptionScope] = v
+		sm.EncryptionScope = v
 	}
 	o.SetServiceMetadata(sm)
 
