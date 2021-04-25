@@ -33,7 +33,6 @@ func (s *Storage) createAppend(ctx context.Context, path string, opt pairStorage
 	}
 	_, err = s.bucket.NewAppendBlobURL(rp).Create(ctx, azblob.BlobHTTPHeaders{}, nil,
 		azblob.BlobAccessConditions{}, nil, cpk)
-
 	if err != nil {
 		return
 	}
@@ -286,6 +285,12 @@ func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int6
 func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size int64, opt pairStorageWriteAppend) (n int64, err error) {
 	rp := o.GetID()
 
+	offset, ok := o.GetAppendOffset()
+	if !ok {
+		err = fmt.Errorf("append offset is not set")
+		return
+	}
+
 	var cpk azblob.ClientProvidedKeyOptions
 	if opt.HasEncryptionKey {
 		cpk, err = calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
@@ -294,19 +299,24 @@ func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size 
 		}
 	}
 
+	var accessConditions azblob.AppendBlobAccessConditions
+	if 0 == offset {
+		accessConditions.AppendPositionAccessConditions.IfAppendPositionEqual = -1
+	} else {
+		accessConditions.AppendPositionAccessConditions.IfAppendPositionEqual = offset
+	}
+
 	appendResp, err := s.bucket.NewAppendBlobURL(rp).AppendBlock(
 		ctx, iowrap.SizedReadSeekCloser(r, size),
-		azblob.AppendBlobAccessConditions{}, nil, cpk)
-
+		accessConditions, nil, cpk)
 	if err != nil {
 		return
 	}
 
-	offset, err := strconv.ParseInt(appendResp.BlobAppendOffset(), 10, 64)
+	offset, err = strconv.ParseInt(appendResp.BlobAppendOffset(), 10, 64)
 	if err != nil {
 		return
 	}
-	offset += size
 	o.SetAppendOffset(offset)
 
 	return offset, nil
