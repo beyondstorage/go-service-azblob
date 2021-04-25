@@ -21,6 +21,31 @@ func (s *Storage) create(path string, opt pairStorageCreate) (o *Object) {
 	return o
 }
 
+func (s *Storage) createAppend(ctx context.Context, path string, opt pairStorageCreateAppend) (o *Object, err error) {
+	rp := s.getAbsPath(path)
+
+	var cpk azblob.ClientProvidedKeyOptions
+	if opt.HasEncryptionKey {
+		cpk, err = calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
+		if err != nil {
+			return
+		}
+	}
+	_, err = s.bucket.NewAppendBlobURL(rp).Create(ctx, azblob.BlobHTTPHeaders{}, nil,
+		azblob.BlobAccessConditions{}, nil, cpk)
+
+	if err != nil {
+		return
+	}
+
+	o = s.newObject(true)
+	o.Mode = ModeRead | ModeAppend
+	o.ID = rp
+	o.Path = path
+	o.SetAppendOffset(0)
+	return o, nil
+}
+
 func (s *Storage) delete(ctx context.Context, path string, opt pairStorageDelete) (err error) {
 	rp := s.getAbsPath(path)
 
@@ -256,4 +281,33 @@ func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int6
 		return 0, err
 	}
 	return size, nil
+}
+
+func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size int64, opt pairStorageWriteAppend) (n int64, err error) {
+	rp := o.GetID()
+
+	var cpk azblob.ClientProvidedKeyOptions
+	if opt.HasEncryptionKey {
+		cpk, err = calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
+		if err != nil {
+			return
+		}
+	}
+
+	appendResp, err := s.bucket.NewAppendBlobURL(rp).AppendBlock(
+		ctx, iowrap.SizedReadSeekCloser(r, size),
+		azblob.AppendBlobAccessConditions{}, nil, cpk)
+
+	if err != nil {
+		return
+	}
+
+	offset, err := strconv.ParseInt(appendResp.BlobAppendOffset(), 10, 64)
+	if err != nil {
+		return
+	}
+	offset += size
+	o.SetAppendOffset(offset)
+
+	return offset, nil
 }
