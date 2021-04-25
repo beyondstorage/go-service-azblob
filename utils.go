@@ -283,8 +283,8 @@ func (s *Storage) formatFileObject(v azblob.BlobItemInternal) (o *typ.Object, er
 	if v.Properties.ContentLength != nil {
 		o.SetContentLength(*v.Properties.ContentLength)
 	}
-	if v.Properties.ContentType != nil && *v.Properties.ContentType != "" {
-		o.SetContentType(*v.Properties.ContentType)
+	if value := *v.Properties.ContentType; len(value) != 0 {
+		o.SetContentType(value)
 	}
 	if len(v.Properties.ContentMD5) > 0 {
 		o.SetContentMd5(base64.StdEncoding.EncodeToString(v.Properties.ContentMD5))
@@ -294,11 +294,11 @@ func (s *Storage) formatFileObject(v azblob.BlobItemInternal) (o *typ.Object, er
 	if value := v.Properties.AccessTier; value != "" {
 		sm.AccessTier = string(value)
 	}
-	if v.Properties.CustomerProvidedKeySha256 != nil && *v.Properties.CustomerProvidedKeySha256 != "" {
-		sm.EncryptionKeySha256 = *v.Properties.CustomerProvidedKeySha256
+	if value := *v.Properties.CustomerProvidedKeySha256; len(value) != 0 {
+		sm.EncryptionKeySha256 = value
 	}
-	if v.Properties.EncryptionScope != nil && *v.Properties.EncryptionScope != "" {
-		sm.EncryptionScope = *v.Properties.EncryptionScope
+	if value := *v.Properties.EncryptionScope; len(value) != 0 {
+		sm.EncryptionScope = value
 	}
 	o.SetServiceMetadata(sm)
 
