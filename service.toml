@@ -49,3 +49,6 @@ type = "string"
 
 [infos.object.meta.encryption-scope]
 type = "string"
+
+[infos.object.meta.server-encrypted]
+type = "bool"
