@@ -313,10 +313,13 @@ func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size 
 		return
 	}
 
+	// BlobAppendOffset() returns the offset at which the block was committed, in bytes, but seems not the next append position.
+	// ref: https://github.com/Azure/azure-storage-blob-go/blob/master/azblob/zt_url_append_blob_test.go
 	offset, err = strconv.ParseInt(appendResp.BlobAppendOffset(), 10, 64)
 	if err != nil {
 		return
 	}
+	offset += size
 	o.SetAppendOffset(offset)
 
 	return offset, nil
