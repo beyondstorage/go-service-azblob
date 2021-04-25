@@ -6,6 +6,9 @@ name = "azblob"
 required = ["credential", "endpoint"]
 optional = ["default_service_pairs", "http_client_options"]
 
+[namespace.storage]
+implement = ["appender"]
+
 [namespace.storage.new]
 required = ["name"]
 optional = ["default_storage_pairs", "pair_policy", "work_dir"]
@@ -18,6 +21,12 @@ optional = ["offset", "io_callback", "size", "encryption_key", "encryption_scope
 
 [namespace.storage.op.write]
 optional = ["content_md5", "content_type", "io_callback", "access_tier", "encryption_key", "encryption_scope"]
+
+[namespace.storage.op.create_append]
+optional = ["encryption_key", "encryption_scope"]
+
+[namespace.storage.op.write_append]
+optional = ["encryption_key", "encryption_scope"]
 
 [namespace.storage.op.stat]
 optional = ["encryption_key", "encryption_scope"]
