@@ -300,6 +300,9 @@ func (s *Storage) formatFileObject(v azblob.BlobItemInternal) (o *typ.Object, er
 	if v.Properties.EncryptionScope != nil {
 		sm.EncryptionScope = *v.Properties.EncryptionScope
 	}
+	if v.Properties.ServerEncrypted != nil {
+		sm.ServerEncrypted = *v.Properties.ServerEncrypted
+	}
 	o.SetServiceMetadata(sm)
 
 	return o, nil

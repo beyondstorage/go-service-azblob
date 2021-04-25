@@ -43,6 +43,8 @@ type ObjectMetadata struct {
 	EncryptionKeySha256 string
 	// EncryptionScope
 	EncryptionScope string
+	// ServerEncrypted
+	ServerEncrypted bool
 }
 
 // GetObjectMetadata will get ObjectMetadata from Object.

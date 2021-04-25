@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"strconv"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 
@@ -208,6 +209,9 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 	}
 	if v := output.EncryptionScope(); v != "" {
 		sm.EncryptionScope = v
+	}
+	if v, err := strconv.ParseBool(output.IsServerEncrypted()); err != nil {
+		sm.ServerEncrypted = v
 	}
 	o.SetServiceMetadata(sm)
 
