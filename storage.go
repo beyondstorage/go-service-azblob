@@ -310,6 +310,14 @@ func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size 
 		accessConditions.AppendPositionAccessConditions.IfAppendPositionEqual = offset
 	}
 
+	if opt.HasAppendTotalSizeMaximum {
+		if opt.AppendTotalSizeMaximum > 0 {
+			accessConditions.AppendPositionAccessConditions.IfMaxSizeLessThanOrEqual = opt.AppendTotalSizeMaximum
+		} else if 0 == opt.AppendTotalSizeMaximum {
+			accessConditions.AppendPositionAccessConditions.IfMaxSizeLessThanOrEqual = -1
+		}
+	}
+
 	appendResp, err := s.bucket.NewAppendBlobURL(rp).AppendBlock(
 		ctx, iowrap.SizedReadSeekCloser(r, size),
 		accessConditions, nil, cpk)
