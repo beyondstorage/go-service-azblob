@@ -333,5 +333,5 @@ func calculateEncryptionHeaders(key []byte, scope string) (cpk azblob.ClientProv
 const (
 	// AppendBlobIfMaxSizeLessThanOrEqual ensures that the AppendBlock operation succeeds only if the append blob's size is less than or equal to a value.
 	// For more information, see https://docs.microsoft.com/rest/api/storageservices/append-block.
-	AppendBlobIfMaxSizeLessThanOrEqual = 4 * 50000
+	AppendBlobIfMaxSizeLessThanOrEqual = 4 * 1024 * 1024 * 50000
 )
