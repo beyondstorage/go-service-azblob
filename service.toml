@@ -23,20 +23,16 @@ optional = ["offset", "io_callback", "size", "encryption_key", "encryption_scope
 optional = ["content_md5", "content_type", "io_callback", "access_tier", "encryption_key", "encryption_scope"]
 
 [namespace.storage.op.create_append]
-optional = ["encryption_key", "encryption_scope"]
+optional = ["content_type", "encryption_key", "encryption_scope"]
 
 [namespace.storage.op.write_append]
-optional = ["append_total_size_maximum", "encryption_key", "encryption_scope"]
+optional = ["content_md5", "encryption_key", "encryption_scope"]
 
 [namespace.storage.op.stat]
 optional = ["encryption_key", "encryption_scope"]
 
 [pairs.access_tier]
 type = "string"
-
-[pairs.append_total_size_maximum]
-type = "int64"
-description = "max append total size in append operation"
 
 [pairs.default_service_pairs]
 type = "DefaultServicePairs"

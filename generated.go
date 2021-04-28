@@ -25,8 +25,6 @@ const Type = "azblob"
 const (
 	// AccessTier
 	pairAccessTier = "azblob_access_tier"
-	// AppendTotalSizeMaximum max append total size in append operation
-	pairAppendTotalSizeMaximum = "azblob_append_total_size_maximum"
 	// DefaultServicePairs set default pairs for service actions
 	pairDefaultServicePairs = "azblob_default_service_pairs"
 	// DefaultStoragePairs set default pairs for storager actions
@@ -74,16 +72,6 @@ func setObjectMetadata(o *Object, om ObjectMetadata) {
 func WithAccessTier(v string) Pair {
 	return Pair{
 		Key:   pairAccessTier,
-		Value: v,
-	}
-}
-
-// WithAppendTotalSizeMaximum will apply append_total_size_maximum value to Options.
-//
-// AppendTotalSizeMaximum max append total size in append operation
-func WithAppendTotalSizeMaximum(v int64) Pair {
-	return Pair{
-		Key:   pairAppendTotalSizeMaximum,
 		Value: v,
 	}
 }
@@ -566,6 +554,8 @@ type pairStorageCreateAppend struct {
 
 	// Required pairs
 	// Optional pairs
+	HasContentType     bool
+	ContentType        string
 	HasEncryptionKey   bool
 	EncryptionKey      []byte
 	HasEncryptionScope bool
@@ -583,6 +573,9 @@ func (s *Storage) parsePairStorageCreateAppend(opts []Pair) (pairStorageCreateAp
 		switch v.Key {
 		// Required pairs
 		// Optional pairs
+		case "content_type":
+			result.HasContentType = true
+			result.ContentType = v.Value.(string)
 		case pairEncryptionKey:
 			result.HasEncryptionKey = true
 			result.EncryptionKey = v.Value.([]byte)
@@ -870,12 +863,12 @@ type pairStorageWriteAppend struct {
 
 	// Required pairs
 	// Optional pairs
-	HasAppendTotalSizeMaximum bool
-	AppendTotalSizeMaximum    int64
-	HasEncryptionKey          bool
-	EncryptionKey             []byte
-	HasEncryptionScope        bool
-	EncryptionScope           string
+	HasContentMd5      bool
+	ContentMd5         string
+	HasEncryptionKey   bool
+	EncryptionKey      []byte
+	HasEncryptionScope bool
+	EncryptionScope    string
 	// Generated pairs
 }
 
@@ -889,9 +882,9 @@ func (s *Storage) parsePairStorageWriteAppend(opts []Pair) (pairStorageWriteAppe
 		switch v.Key {
 		// Required pairs
 		// Optional pairs
-		case pairAppendTotalSizeMaximum:
-			result.HasAppendTotalSizeMaximum = true
-			result.AppendTotalSizeMaximum = v.Value.(int64)
+		case "content_md5":
+			result.HasContentMd5 = true
+			result.ContentMd5 = v.Value.(string)
 		case pairEncryptionKey:
 			result.HasEncryptionKey = true
 			result.EncryptionKey = v.Value.([]byte)
