@@ -66,7 +66,8 @@ func setObjectMetadata(o *Object, om ObjectMetadata) {
 	o.SetServiceMetadata(om)
 }
 
-// WithAccessTier will apply access_tier value to Options
+// WithAccessTier will apply access_tier value to Options.
+//
 // AccessTier
 func WithAccessTier(v string) Pair {
 	return Pair{
@@ -75,7 +76,8 @@ func WithAccessTier(v string) Pair {
 	}
 }
 
-// WithDefaultServicePairs will apply default_service_pairs value to Options
+// WithDefaultServicePairs will apply default_service_pairs value to Options.
+//
 // DefaultServicePairs set default pairs for service actions
 func WithDefaultServicePairs(v DefaultServicePairs) Pair {
 	return Pair{
@@ -84,7 +86,8 @@ func WithDefaultServicePairs(v DefaultServicePairs) Pair {
 	}
 }
 
-// WithDefaultStoragePairs will apply default_storage_pairs value to Options
+// WithDefaultStoragePairs will apply default_storage_pairs value to Options.
+//
 // DefaultStoragePairs set default pairs for storager actions
 func WithDefaultStoragePairs(v DefaultStoragePairs) Pair {
 	return Pair{
@@ -93,7 +96,8 @@ func WithDefaultStoragePairs(v DefaultStoragePairs) Pair {
 	}
 }
 
-// WithEncryptionKey will apply encryption_key value to Options
+// WithEncryptionKey will apply encryption_key value to Options.
+//
 // EncryptionKey is the customer's 32-byte AES-256 key
 func WithEncryptionKey(v []byte) Pair {
 	return Pair{
@@ -102,7 +106,8 @@ func WithEncryptionKey(v []byte) Pair {
 	}
 }
 
-// WithEncryptionScope will apply encryption_scope value to Options
+// WithEncryptionScope will apply encryption_scope value to Options.
+//
 // EncryptionScope Specifies the name of the encryption scope. See https://docs.microsoft.com/en-us/azure/storage/blobs/encryption-scope-overview for details.
 func WithEncryptionScope(v string) Pair {
 	return Pair{
@@ -467,6 +472,7 @@ func parsePairStorageNew(opts []Pair) (pairStorageNew, error) {
 
 // DefaultStoragePairs is default pairs for specific action
 type DefaultStoragePairs struct {
+	CommitAppend []Pair
 	Create       []Pair
 	CreateAppend []Pair
 	Delete       []Pair
@@ -476,6 +482,38 @@ type DefaultStoragePairs struct {
 	Stat         []Pair
 	Write        []Pair
 	WriteAppend  []Pair
+}
+
+// pairStorageCommitAppend is the parsed struct
+type pairStorageCommitAppend struct {
+	pairs []Pair
+
+	// Required pairs
+	// Optional pairs
+	// Generated pairs
+}
+
+// parsePairStorageCommitAppend will parse Pair slice into *pairStorageCommitAppend
+func (s *Storage) parsePairStorageCommitAppend(opts []Pair) (pairStorageCommitAppend, error) {
+	result := pairStorageCommitAppend{
+		pairs: opts,
+	}
+
+	for _, v := range opts {
+		switch v.Key {
+		// Required pairs
+		// Optional pairs
+		// Generated pairs
+		default:
+
+			if s.pairPolicy.All || s.pairPolicy.CommitAppend {
+				return pairStorageCommitAppend{}, services.NewPairUnsupportedError(v)
+			}
+
+		}
+	}
+
+	return result, nil
 }
 
 // pairStorageCreate is the parsed struct
@@ -516,6 +554,8 @@ type pairStorageCreateAppend struct {
 
 	// Required pairs
 	// Optional pairs
+	HasContentType     bool
+	ContentType        string
 	HasEncryptionKey   bool
 	EncryptionKey      []byte
 	HasEncryptionScope bool
@@ -533,6 +573,9 @@ func (s *Storage) parsePairStorageCreateAppend(opts []Pair) (pairStorageCreateAp
 		switch v.Key {
 		// Required pairs
 		// Optional pairs
+		case "content_type":
+			result.HasContentType = true
+			result.ContentType = v.Value.(string)
 		case pairEncryptionKey:
 			result.HasEncryptionKey = true
 			result.EncryptionKey = v.Value.([]byte)
@@ -820,6 +863,8 @@ type pairStorageWriteAppend struct {
 
 	// Required pairs
 	// Optional pairs
+	HasContentMd5      bool
+	ContentMd5         string
 	HasEncryptionKey   bool
 	EncryptionKey      []byte
 	HasEncryptionScope bool
@@ -837,6 +882,9 @@ func (s *Storage) parsePairStorageWriteAppend(opts []Pair) (pairStorageWriteAppe
 		switch v.Key {
 		// Required pairs
 		// Optional pairs
+		case "content_md5":
+			result.HasContentMd5 = true
+			result.ContentMd5 = v.Value.(string)
 		case pairEncryptionKey:
 			result.HasEncryptionKey = true
 			result.EncryptionKey = v.Value.([]byte)
@@ -854,6 +902,31 @@ func (s *Storage) parsePairStorageWriteAppend(opts []Pair) (pairStorageWriteAppe
 	}
 
 	return result, nil
+}
+
+// CommitAppend will commit and finish an append process.
+//
+// This function will create a context by default.
+func (s *Storage) CommitAppend(o *Object, pairs ...Pair) (err error) {
+	ctx := context.Background()
+	return s.CommitAppendWithContext(ctx, o, pairs...)
+}
+
+// CommitAppendWithContext will commit and finish an append process.
+func (s *Storage) CommitAppendWithContext(ctx context.Context, o *Object, pairs ...Pair) (err error) {
+	pairs = append(pairs, s.defaultPairs.CommitAppend...)
+	var opt pairStorageCommitAppend
+
+	defer func() {
+		err = s.formatError("commit_append", err)
+	}()
+
+	opt, err = s.parsePairStorageCommitAppend(pairs)
+	if err != nil {
+		return
+	}
+
+	return s.commitAppend(ctx, o, opt)
 }
 
 // Create will create a new object without any api call.

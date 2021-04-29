@@ -23,10 +23,10 @@ optional = ["offset", "io_callback", "size", "encryption_key", "encryption_scope
 optional = ["content_md5", "content_type", "io_callback", "access_tier", "encryption_key", "encryption_scope"]
 
 [namespace.storage.op.create_append]
-optional = ["encryption_key", "encryption_scope"]
+optional = ["content_type", "encryption_key", "encryption_scope"]
 
 [namespace.storage.op.write_append]
-optional = ["encryption_key", "encryption_scope"]
+optional = ["content_md5", "encryption_key", "encryption_scope"]
 
 [namespace.storage.op.stat]
 optional = ["encryption_key", "encryption_scope"]

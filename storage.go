@@ -13,6 +13,10 @@ import (
 	. "github.com/aos-dev/go-storage/v3/types"
 )
 
+func (s *Storage) commitAppend(ctx context.Context, o *Object, opt pairStorageCommitAppend) (err error) {
+	return
+}
+
 func (s *Storage) create(path string, opt pairStorageCreate) (o *Object) {
 	o = s.newObject(false)
 	o.Mode = ModeRead
@@ -24,6 +28,11 @@ func (s *Storage) create(path string, opt pairStorageCreate) (o *Object) {
 func (s *Storage) createAppend(ctx context.Context, path string, opt pairStorageCreateAppend) (o *Object, err error) {
 	rp := s.getAbsPath(path)
 
+	headers := azblob.BlobHTTPHeaders{}
+	if opt.HasContentType {
+		headers.ContentType = opt.ContentType
+	}
+
 	var cpk azblob.ClientProvidedKeyOptions
 	if opt.HasEncryptionKey {
 		cpk, err = calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
@@ -31,7 +40,8 @@ func (s *Storage) createAppend(ctx context.Context, path string, opt pairStorage
 			return
 		}
 	}
-	_, err = s.bucket.NewAppendBlobURL(rp).Create(ctx, azblob.BlobHTTPHeaders{}, nil,
+
+	_, err = s.bucket.NewAppendBlobURL(rp).Create(ctx, headers, nil,
 		azblob.BlobAccessConditions{}, nil, cpk)
 	if err != nil {
 		return
@@ -283,6 +293,11 @@ func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int6
 }
 
 func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size int64, opt pairStorageWriteAppend) (n int64, err error) {
+	if !o.Mode.IsAppend() {
+		err = fmt.Errorf("object not appendable")
+		return
+	}
+
 	rp := o.GetID()
 
 	offset, ok := o.GetAppendOffset()
@@ -299,16 +314,17 @@ func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size 
 		}
 	}
 
-	var accessConditions azblob.AppendBlobAccessConditions
+	var ac azblob.AppendBlobAccessConditions
+	ac.AppendPositionAccessConditions.IfMaxSizeLessThanOrEqual = AppendBlobIfMaxSizeLessThanOrEqual
 	if 0 == offset {
-		accessConditions.AppendPositionAccessConditions.IfAppendPositionEqual = -1
+		ac.AppendPositionAccessConditions.IfAppendPositionEqual = -1
 	} else {
-		accessConditions.AppendPositionAccessConditions.IfAppendPositionEqual = offset
+		ac.AppendPositionAccessConditions.IfAppendPositionEqual = offset
 	}
 
 	appendResp, err := s.bucket.NewAppendBlobURL(rp).AppendBlock(
 		ctx, iowrap.SizedReadSeekCloser(r, size),
-		accessConditions, nil, cpk)
+		ac, nil, cpk)
 	if err != nil {
 		return
 	}
