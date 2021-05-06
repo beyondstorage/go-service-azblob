@@ -61,7 +61,10 @@ func (s *Storage) delete(ctx context.Context, path string, opt pairStorageDelete
 	_, err = s.bucket.NewBlockBlobURL(rp).Delete(ctx,
 		azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
 	if err != nil {
-		return err
+		storageErr, ok := err.(azblob.StorageError)
+		if !ok || storageErr.ServiceCode() != azblob.ServiceCodeBlobNotFound {
+			return err
+		}
 	}
 	return nil
 }
@@ -338,5 +341,5 @@ func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size 
 	offset += size
 	o.SetAppendOffset(offset)
 
-	return offset, nil
+	return size, nil
 }
