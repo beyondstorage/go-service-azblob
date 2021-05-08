@@ -60,9 +60,15 @@ func (s *Storage) delete(ctx context.Context, path string, opt pairStorageDelete
 
 	_, err = s.bucket.NewBlockBlobURL(rp).Delete(ctx,
 		azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
+	if err != nil && checkError(err, azblob.ServiceCodeBlobNotFound) {
+		// Omit `BlobNotFound` error here
+		// ref: [AOS-46](https://github.com/aos-dev/specs/blob/master/rfcs/46-idempotent-delete.md)
+		err = nil
+	}
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -338,5 +344,5 @@ func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size 
 	offset += size
 	o.SetAppendOffset(offset)
 
-	return offset, nil
+	return size, nil
 }
