@@ -60,12 +60,15 @@ func (s *Storage) delete(ctx context.Context, path string, opt pairStorageDelete
 
 	_, err = s.bucket.NewBlockBlobURL(rp).Delete(ctx,
 		azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
-	if err != nil {
-		storageErr, ok := err.(azblob.StorageError)
-		if !ok || storageErr.ServiceCode() != azblob.ServiceCodeBlobNotFound {
-			return err
-		}
+	if err != nil && checkError(err, azblob.ServiceCodeBlobNotFound) {
+		// Omit `BlobNotFound` error here
+		// ref: [AOS-46](https://github.com/aos-dev/specs/blob/master/rfcs/46-idempotent-delete.md)
+		err = nil
 	}
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

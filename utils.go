@@ -335,3 +335,12 @@ const (
 	// For more information, see https://docs.microsoft.com/rest/api/storageservices/append-block.
 	AppendBlobIfMaxSizeLessThanOrEqual = 4 * 1024 * 1024 * 50000
 )
+
+func checkError(err error, expect azblob.ServiceCodeType) bool {
+	e, ok := err.(azblob.StorageError)
+	if !ok {
+		return false
+	}
+
+	return e.ServiceCode() == expect
+}
