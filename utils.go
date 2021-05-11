@@ -13,6 +13,7 @@ import (
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 
+	ps "github.com/aos-dev/go-storage/v3/pairs"
 	"github.com/aos-dev/go-storage/v3/pkg/credential"
 	"github.com/aos-dev/go-storage/v3/pkg/endpoint"
 	"github.com/aos-dev/go-storage/v3/pkg/httpclient"
