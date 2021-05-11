@@ -1,9 +1,9 @@
 package azblob
 
-import "errors"
+import "github.com/aos-dev/go-storage/v3/services"
 
 var (
-	// ErrInvalidEncryptionKey will be returned while encryption key is invalid.
+	// ErrEncryptionKeyInvalid will be returned while encryption key is invalid.
 	// Encryption key must be a 32-byte AES-256 key.
-	ErrInvalidEncryptionKey = errors.New("invalid encryption key")
+	ErrEncryptionKeyInvalid = services.NewErrorCode("invalid encryption key")
 )
