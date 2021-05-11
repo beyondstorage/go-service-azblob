@@ -87,7 +87,7 @@ func NewStorager(pairs ...typ.Pair) (typ.Storager, error) {
 func newServicer(pairs ...typ.Pair) (srv *Service, err error) {
 	defer func() {
 		if err != nil {
-			err = &services.InitError{Op: "new_servicer", Type: Type, Err: err, Pairs: pairs}
+			err = services.InitError{Op: "new_servicer", Type: Type, Err: formatError(err), Pairs: pairs}
 		}
 	}()
 
@@ -110,7 +110,7 @@ func newServicer(pairs ...typ.Pair) (srv *Service, err error) {
 		return nil, err
 	}
 	if cred.Protocol() != credential.ProtocolHmac {
-		return nil, services.NewPairUnsupportedError(ps.WithCredential(opt.Credential))
+		return nil, services.PairUnsupportedError{Pair: ps.WithCredential(opt.Credential)}
 	}
 
 	credValue, err := azblob.NewSharedKeyCredential(cred.Hmac())
@@ -150,12 +150,6 @@ func newServicer(pairs ...typ.Pair) (srv *Service, err error) {
 }
 
 func newServicerAndStorager(pairs ...typ.Pair) (srv *Service, store *Storage, err error) {
-	defer func() {
-		if err != nil {
-			err = &services.InitError{Op: "new_storager", Type: Type, Err: err, Pairs: pairs}
-		}
-	}()
-
 	srv, err = newServicer(pairs...)
 	if err != nil {
 		return
@@ -163,6 +157,7 @@ func newServicerAndStorager(pairs ...typ.Pair) (srv *Service, store *Storage, er
 
 	store, err = srv.newStorage(pairs...)
 	if err != nil {
+		err = services.InitError{Op: "new_storager", Type: Type, Err: formatError(err), Pairs: pairs}
 		return
 	}
 	return
@@ -181,10 +176,14 @@ const (
 
 // ref: https://docs.microsoft.com/en-us/rest/api/storageservices/status-and-error-codes2
 func formatError(err error) error {
+	if _, ok := err.(services.AosError); ok {
+		return err
+	}
+
 	// Handle errors returned by azblob.
 	e, ok := err.(azblob.StorageError)
 	if !ok {
-		return err
+		return fmt.Errorf("%w, %v", services.ErrUnexpected, err)
 	}
 
 	switch azblob.StorageErrorCodeType(e.ServiceCode()) {
@@ -193,14 +192,14 @@ func formatError(err error) error {
 		case 404:
 			return fmt.Errorf("%w: %v", services.ErrObjectNotExist, err)
 		default:
-			return err
+			return fmt.Errorf("%w, %v", services.ErrUnexpected, err)
 		}
 	case azblob.StorageErrorCodeBlobNotFound:
 		return fmt.Errorf("%w: %v", services.ErrObjectNotExist, err)
 	case azblob.StorageErrorCodeInsufficientAccountPermissions:
 		return fmt.Errorf("%w: %v", services.ErrPermissionDenied, err)
 	default:
-		return err
+		return fmt.Errorf("%w, %v", services.ErrUnexpected, err)
 	}
 }
 
@@ -239,7 +238,7 @@ func (s *Service) formatError(op string, err error, name string) error {
 		return nil
 	}
 
-	return &services.ServiceError{
+	return services.ServiceError{
 		Op:       op,
 		Err:      formatError(err),
 		Servicer: s,
@@ -264,7 +263,7 @@ func (s *Storage) formatError(op string, err error, path ...string) error {
 		return nil
 	}
 
-	return &services.StorageError{
+	return services.StorageError{
 		Op:       op,
 		Err:      formatError(err),
 		Storager: s,
@@ -315,7 +314,7 @@ func (s *Storage) newObject(done bool) *typ.Object {
 
 func calculateEncryptionHeaders(key []byte, scope string) (cpk azblob.ClientProvidedKeyOptions, err error) {
 	if len(key) != 32 {
-		err = ErrInvalidEncryptionKey
+		err = ErrEncryptionKeyInvalid
 		return
 	}
 	keyBase64 := base64.StdEncoding.EncodeToString(key)
