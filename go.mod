@@ -1,4 +1,4 @@
-module github.com/beyondstorage/go-service-azblob
+module github.com/beyondstorage/go-service-azblob/v2
 
 go 1.15
 
