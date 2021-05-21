@@ -5,8 +5,8 @@ import (
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 
-	ps "github.com/aos-dev/go-storage/v3/pairs"
-	typ "github.com/aos-dev/go-storage/v3/types"
+	ps "github.com/beyondstorage/go-storage/v4/pairs"
+	typ "github.com/beyondstorage/go-storage/v4/types"
 )
 
 func (s *Service) create(ctx context.Context, name string, opt pairServiceCreate) (store typ.Storager, err error) {
