@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - *: Add UnimplementedStub (#11)
 - tests: Introduce STORAGE_AZBLOB_INTEGRATION_TEST (#12)
 - storage: Implement SSE support (#13)
-- storage: Implement AOS-40 (#15)
+- storage: Implement GSP-40 (#15)
 
 ### Changed
 
@@ -27,4 +27,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Implement azblob services.
 
-[v1.1.0]: https://github.com/aos-dev/go-service-azblob/compare/v1.0.0...v1.1.0
+[v1.1.0]: https://github.com/beyondstorage/go-service-azblob/compare/v1.0.0...v1.1.0

@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
-	azblob "github.com/aos-dev/go-service-azblob"
-	ps "github.com/aos-dev/go-storage/v3/pairs"
-	"github.com/aos-dev/go-storage/v3/types"
+	azblob "github.com/beyondstorage/go-service-azblob/v2"
+	ps "github.com/beyondstorage/go-storage/v4/pairs"
+	"github.com/beyondstorage/go-storage/v4/types"
 	"github.com/google/uuid"
 )
 
