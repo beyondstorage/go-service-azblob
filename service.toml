@@ -4,14 +4,14 @@ name = "azblob"
 
 [namespace.service.new]
 required = ["credential", "endpoint"]
-optional = ["default_service_pairs", "http_client_options"]
+optional = ["service_features", "default_service_pairs", "http_client_options"]
 
 [namespace.storage]
 implement = ["appender"]
 
 [namespace.storage.new]
 required = ["name"]
-optional = ["default_storage_pairs", "pair_policy", "work_dir"]
+optional = ["storage_features", "default_storage_pairs", "work_dir"]
 
 [namespace.storage.op.list]
 optional = ["list_mode"]
@@ -30,6 +30,14 @@ optional = ["content_md5", "encryption_key", "encryption_scope"]
 
 [namespace.storage.op.stat]
 optional = ["encryption_key", "encryption_scope"]
+
+[pairs.service_features]
+type = "ServiceFeatures"
+description = "set service features"
+
+[pairs.storage_features]
+type = "StorageFeatures"
+description = "set storage features"
 
 [pairs.access_tier]
 type = "string"
