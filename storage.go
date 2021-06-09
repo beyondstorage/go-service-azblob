@@ -3,6 +3,7 @@ package azblob
 import (
 	"context"
 	"encoding/base64"
+	"github.com/beyondstorage/go-storage/v4/pairs"
 	"io"
 	"strconv"
 
@@ -18,8 +19,16 @@ func (s *Storage) commitAppend(ctx context.Context, o *Object, opt pairStorageCo
 }
 
 func (s *Storage) create(path string, opt pairStorageCreate) (o *Object) {
-	o = s.newObject(false)
-	o.Mode = ModeRead
+
+	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		o = s.newObject(true)
+		path += "/"
+		o.Mode = ModeDir
+	} else {
+		o = s.newObject(false)
+		o.Mode = ModeRead
+	}
+
 	o.ID = s.getAbsPath(path)
 	o.Path = path
 	return o
@@ -55,7 +64,27 @@ func (s *Storage) createAppend(ctx context.Context, path string, opt pairStorage
 	return o, nil
 }
 
+func (s *Storage) createDir(ctx context.Context, path string, opt pairStorageCreateDir) (o *Object, err error) {
+	// Specify a character or string delimiter within a blob name to create a virtual hierarchy.
+	// ref: https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#resource-names
+	path += "/"
+	_, err = s.Write(path, nil, 0, pairs.WithContentType("application/x-directory"))
+	if err != nil {
+		return
+	}
+
+	o = s.newObject(true)
+	o.ID = s.getAbsPath(path)
+	o.Path = path
+	o.Mode |= ModeDir
+	return
+}
+
 func (s *Storage) delete(ctx context.Context, path string, opt pairStorageDelete) (err error) {
+	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		path += "/"
+	}
+
 	rp := s.getAbsPath(path)
 
 	_, err = s.bucket.NewBlockBlobURL(rp).Delete(ctx,
@@ -207,6 +236,10 @@ func (s *Storage) read(ctx context.Context, path string, w io.Writer, opt pairSt
 }
 
 func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o *Object, err error) {
+	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		path += "/"
+	}
+
 	rp := s.getAbsPath(path)
 
 	var cpk azblob.ClientProvidedKeyOptions
@@ -225,7 +258,12 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 	o = s.newObject(true)
 	o.ID = rp
 	o.Path = path
-	o.Mode |= ModeRead
+
+	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		o.Mode |= ModeDir
+	} else {
+		o.Mode |= ModeRead
+	}
 
 	o.SetContentLength(output.ContentLength())
 	o.SetLastModified(output.LastModified())
