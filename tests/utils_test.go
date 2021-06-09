@@ -19,7 +19,7 @@ func setupTest(t *testing.T) types.Storager {
 		ps.WithEndpoint(os.Getenv("STORAGE_AZBLOB_ENDPOINT")),
 		ps.WithWorkDir("/"+uuid.New().String()+"/"),
 		azblob.WithStorageFeatures(azblob.StorageFeatures{
-			LooseOperationCreateDir: true,
+			VirtualOperationCreateDir: true,
 		}),
 	)
 	if err != nil {
