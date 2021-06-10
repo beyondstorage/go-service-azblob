@@ -7,11 +7,17 @@ required = ["credential", "endpoint"]
 optional = ["service_features", "default_service_pairs", "http_client_options"]
 
 [namespace.storage]
-implement = ["appender"]
+implement = ["appender", "direr"]
 
 [namespace.storage.new]
 required = ["name"]
 optional = ["storage_features", "default_storage_pairs", "work_dir"]
+
+[namespace.storage.op.create]
+optional = ["object_mode"]
+
+[namespace.storage.op.delete]
+optional = ["object_mode"]
 
 [namespace.storage.op.list]
 optional = ["list_mode"]
@@ -29,7 +35,11 @@ optional = ["content_type", "encryption_key", "encryption_scope"]
 optional = ["content_md5", "encryption_key", "encryption_scope"]
 
 [namespace.storage.op.stat]
-optional = ["encryption_key", "encryption_scope"]
+optional = ["encryption_key", "encryption_scope", "object_mode"]
+
+[namespace.storage.op.create_dir]
+simulated = true
+optional = ["access_tier", "encryption_key", "encryption_scope"]
 
 [pairs.service_features]
 type = "ServiceFeatures"
