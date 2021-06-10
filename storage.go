@@ -3,7 +3,6 @@ package azblob
 import (
 	"context"
 	"encoding/base64"
-	"github.com/beyondstorage/go-storage/v4/pairs"
 	"io"
 	"strconv"
 
@@ -19,17 +18,19 @@ func (s *Storage) commitAppend(ctx context.Context, o *Object, opt pairStorageCo
 }
 
 func (s *Storage) create(path string, opt pairStorageCreate) (o *Object) {
+	rp := s.getAbsPath(path)
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
-		o = s.newObject(true)
 		path += "/"
+		rp += "/"
+		o = s.newObject(true)
 		o.Mode = ModeDir
 	} else {
 		o = s.newObject(false)
 		o.Mode = ModeRead
 	}
 
-	o.ID = s.getAbsPath(path)
+	o.ID = rp
 	o.Path = path
 	return o
 }
@@ -65,27 +66,30 @@ func (s *Storage) createAppend(ctx context.Context, path string, opt pairStorage
 }
 
 func (s *Storage) createDir(ctx context.Context, path string, opt pairStorageCreateDir) (o *Object, err error) {
+	rp := s.getAbsPath(path)
+
 	// Specify a character or string delimiter within a blob name to create a virtual hierarchy.
 	// ref: https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#resource-names
 	path += "/"
-	_, err = s.Write(path, nil, 0, pairs.WithContentType("application/x-directory"))
+	rp += "/"
+	_, err = s.write(ctx, rp, nil, 0, pairStorageWrite{})
 	if err != nil {
 		return
 	}
 
 	o = s.newObject(true)
-	o.ID = s.getAbsPath(path)
+	o.ID = rp
 	o.Path = path
 	o.Mode |= ModeDir
 	return
 }
 
 func (s *Storage) delete(ctx context.Context, path string, opt pairStorageDelete) (err error) {
-	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
-		path += "/"
-	}
-
 	rp := s.getAbsPath(path)
+
+	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		rp += "/"
+	}
 
 	_, err = s.bucket.NewBlockBlobURL(rp).Delete(ctx,
 		azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
@@ -236,11 +240,12 @@ func (s *Storage) read(ctx context.Context, path string, w io.Writer, opt pairSt
 }
 
 func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o *Object, err error) {
+	rp := s.getAbsPath(path)
+
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
 		path += "/"
+		rp += "/"
 	}
-
-	rp := s.getAbsPath(path)
 
 	var cpk azblob.ClientProvidedKeyOptions
 	if opt.HasEncryptionKey {
