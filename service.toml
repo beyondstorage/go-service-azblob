@@ -39,6 +39,7 @@ optional = ["encryption_key", "encryption_scope", "object_mode"]
 
 [namespace.storage.op.create_dir]
 simulated = true
+optional = ["access_tier", "encryption_key", "encryption_scope"]
 
 [pairs.service_features]
 type = "ServiceFeatures"

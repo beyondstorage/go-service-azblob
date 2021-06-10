@@ -725,7 +725,13 @@ func (s *Storage) parsePairStorageCreateAppend(opts []Pair) (pairStorageCreateAp
 
 // pairStorageCreateDir is the parsed struct
 type pairStorageCreateDir struct {
-	pairs []Pair
+	pairs              []Pair
+	HasAccessTier      bool
+	AccessTier         string
+	HasEncryptionKey   bool
+	EncryptionKey      []byte
+	HasEncryptionScope bool
+	EncryptionScope    string
 }
 
 // parsePairStorageCreateDir will parse Pair slice into *pairStorageCreateDir
@@ -739,6 +745,27 @@ func (s *Storage) parsePairStorageCreateDir(opts []Pair) (pairStorageCreateDir, 
 		isUnsupportedPair := false
 
 		switch v.Key {
+		case pairAccessTier:
+			if result.HasAccessTier {
+				continue
+			}
+			result.HasAccessTier = true
+			result.AccessTier = v.Value.(string)
+			continue
+		case pairEncryptionKey:
+			if result.HasEncryptionKey {
+				continue
+			}
+			result.HasEncryptionKey = true
+			result.EncryptionKey = v.Value.([]byte)
+			continue
+		case pairEncryptionScope:
+			if result.HasEncryptionScope {
+				continue
+			}
+			result.HasEncryptionScope = true
+			result.EncryptionScope = v.Value.(string)
+			continue
 		default:
 			isUnsupportedPair = true
 		}

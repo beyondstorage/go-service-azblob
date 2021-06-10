@@ -21,7 +21,6 @@ func (s *Storage) create(path string, opt pairStorageCreate) (o *Object) {
 	rp := s.getAbsPath(path)
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
-		path += "/"
 		rp += "/"
 		o = s.newObject(true)
 		o.Mode = ModeDir
@@ -70,9 +69,25 @@ func (s *Storage) createDir(ctx context.Context, path string, opt pairStorageCre
 
 	// Specify a character or string delimiter within a blob name to create a virtual hierarchy.
 	// ref: https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#resource-names
-	path += "/"
 	rp += "/"
-	_, err = s.write(ctx, rp, nil, 0, pairStorageWrite{})
+
+	accessTier := azblob.AccessTierNone
+	if opt.HasAccessTier {
+		accessTier = azblob.AccessTierType(opt.AccessTier)
+	}
+
+	var cpk azblob.ClientProvidedKeyOptions
+	if opt.HasEncryptionKey {
+		cpk, err = calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
+		if err != nil {
+			return
+		}
+	}
+
+	_, err = s.bucket.NewBlockBlobURL(rp).Upload(
+		ctx, nil, azblob.BlobHTTPHeaders{},
+		azblob.Metadata{}, azblob.BlobAccessConditions{},
+		accessTier, azblob.BlobTagsMap{}, cpk)
 	if err != nil {
 		return
 	}
@@ -243,7 +258,6 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 	rp := s.getAbsPath(path)
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
-		path += "/"
 		rp += "/"
 	}
 
