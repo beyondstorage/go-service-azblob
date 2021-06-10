@@ -85,7 +85,7 @@ func (s *Storage) createDir(ctx context.Context, path string, opt pairStorageCre
 	}
 
 	_, err = s.bucket.NewBlockBlobURL(rp).Upload(
-		ctx, nil, azblob.BlobHTTPHeaders{},
+		ctx, iowrap.SizedReadSeekCloser(nil, 0), azblob.BlobHTTPHeaders{},
 		azblob.Metadata{}, azblob.BlobAccessConditions{},
 		accessTier, azblob.BlobTagsMap{}, cpk)
 	if err != nil {
