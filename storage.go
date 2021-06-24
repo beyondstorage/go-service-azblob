@@ -151,6 +151,10 @@ func (s *Storage) metadata(opt pairStorageMetadata) (meta *StorageMeta) {
 	meta = NewStorageMeta()
 	meta.Name = s.name
 	meta.WorkDir = s.workDir
+	meta.SetWriteSizeMaximum(WriteSizeMaximum)
+	meta.SetAppendSizeMaximum(AppendSizeMaximum)
+	meta.SetAppendNumberMaximum(AppendNumberMaximum)
+	meta.SetAppendTotalSizeMaximum(AppendBlobIfMaxSizeLessThanOrEqual)
 	return meta
 }
 
@@ -327,6 +331,11 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 }
 
 func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int64, opt pairStorageWrite) (n int64, err error) {
+	if size > WriteSizeMaximum {
+		err = services.ErrRestrictionDissatisfied
+		return
+	}
+
 	rp := s.getAbsPath(path)
 
 	if opt.HasIoCallback {
@@ -367,6 +376,10 @@ func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int6
 }
 
 func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size int64, opt pairStorageWriteAppend) (n int64, err error) {
+	if size > AppendSizeMaximum {
+		err = services.ErrRestrictionDissatisfied
+		return
+	}
 	rp := o.GetID()
 
 	offset, _ := o.GetAppendOffset()
