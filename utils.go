@@ -13,9 +13,9 @@ import (
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 
+	"github.com/beyondstorage/go-endpoint"
 	ps "github.com/beyondstorage/go-storage/v4/pairs"
 	"github.com/beyondstorage/go-storage/v4/pkg/credential"
-	"github.com/beyondstorage/go-storage/v4/pkg/endpoint"
 	"github.com/beyondstorage/go-storage/v4/pkg/httpclient"
 	"github.com/beyondstorage/go-storage/v4/services"
 	typ "github.com/beyondstorage/go-storage/v4/types"
@@ -105,7 +105,17 @@ func newServicer(pairs ...typ.Pair) (srv *Service, err error) {
 		return nil, err
 	}
 
-	primaryURL, _ := url.Parse(ep.String())
+	var uri string
+	switch ep.Protocol() {
+	case endpoint.ProtocolHTTP:
+		uri, _, _ = ep.HTTP()
+	case endpoint.ProtocolHTTPS:
+		uri, _, _ = ep.HTTPS()
+	default:
+		return nil, services.PairUnsupportedError{Pair: ps.WithEndpoint(opt.Endpoint)}
+	}
+
+	primaryURL, _ := url.Parse(uri)
 
 	cred, err := credential.Parse(opt.Credential)
 	if err != nil {
