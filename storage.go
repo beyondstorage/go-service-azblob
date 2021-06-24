@@ -21,6 +21,10 @@ func (s *Storage) create(path string, opt pairStorageCreate) (o *Object) {
 	rp := s.getAbsPath(path)
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		if !s.features.VirtualDir {
+			return
+		}
+
 		rp += "/"
 		o = s.newObject(true)
 		o.Mode = ModeDir
@@ -65,6 +69,11 @@ func (s *Storage) createAppend(ctx context.Context, path string, opt pairStorage
 }
 
 func (s *Storage) createDir(ctx context.Context, path string, opt pairStorageCreateDir) (o *Object, err error) {
+	if !s.features.VirtualDir {
+		err = services.ErrCapabilityInsufficient
+		return
+	}
+
 	rp := s.getAbsPath(path)
 
 	// Specify a character or string delimiter within a blob name to create a virtual hierarchy.
@@ -76,18 +85,10 @@ func (s *Storage) createDir(ctx context.Context, path string, opt pairStorageCre
 		accessTier = azblob.AccessTierType(opt.AccessTier)
 	}
 
-	var cpk azblob.ClientProvidedKeyOptions
-	if opt.HasEncryptionKey {
-		cpk, err = calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
-		if err != nil {
-			return
-		}
-	}
-
 	_, err = s.bucket.NewBlockBlobURL(rp).Upload(
 		ctx, iowrap.SizedReadSeekCloser(nil, 0), azblob.BlobHTTPHeaders{},
 		azblob.Metadata{}, azblob.BlobAccessConditions{},
-		accessTier, azblob.BlobTagsMap{}, cpk)
+		accessTier, azblob.BlobTagsMap{}, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		return
 	}
@@ -103,6 +104,11 @@ func (s *Storage) delete(ctx context.Context, path string, opt pairStorageDelete
 	rp := s.getAbsPath(path)
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		if !s.features.VirtualDir {
+			err = services.ErrCapabilityInsufficient
+			return
+		}
+
 		rp += "/"
 	}
 
@@ -258,6 +264,11 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 	rp := s.getAbsPath(path)
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		if !s.features.VirtualDir {
+			err = services.ErrCapabilityInsufficient
+			return
+		}
+
 		rp += "/"
 	}
 

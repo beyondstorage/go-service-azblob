@@ -18,9 +18,6 @@ func setupTest(t *testing.T) types.Storager {
 		ps.WithName(os.Getenv("STORAGE_AZBLOB_NAME")),
 		ps.WithEndpoint(os.Getenv("STORAGE_AZBLOB_ENDPOINT")),
 		ps.WithWorkDir("/"+uuid.New().String()+"/"),
-		azblob.WithStorageFeatures(azblob.StorageFeatures{
-			VirtualOperationAll: true,
-		}),
 	)
 	if err != nil {
 		t.Errorf("new storager: %v", err)
