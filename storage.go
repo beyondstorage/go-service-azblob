@@ -308,7 +308,7 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 		o.SetContentMd5(base64.StdEncoding.EncodeToString(v))
 	}
 
-	var sm ObjectMetadata
+	var sm ObjectSystemMetadata
 	if v := output.AccessTier(); v != "" {
 		sm.AccessTier = v
 	}
@@ -321,7 +321,7 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 	if v, err := strconv.ParseBool(output.IsServerEncrypted()); err == nil {
 		sm.ServerEncrypted = v
 	}
-	o.SetServiceMetadata(sm)
+	o.SetSystemMetadata(sm)
 
 	return o, nil
 }

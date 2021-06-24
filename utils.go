@@ -295,7 +295,7 @@ func (s *Storage) formatFileObject(v azblob.BlobItemInternal) (o *typ.Object, er
 		o.SetContentMd5(base64.StdEncoding.EncodeToString(v.Properties.ContentMD5))
 	}
 
-	var sm ObjectMetadata
+	var sm ObjectSystemMetadata
 	if value := v.Properties.AccessTier; value != "" {
 		sm.AccessTier = string(value)
 	}
@@ -308,7 +308,7 @@ func (s *Storage) formatFileObject(v azblob.BlobItemInternal) (o *typ.Object, er
 	if v.Properties.ServerEncrypted != nil {
 		sm.ServerEncrypted = *v.Properties.ServerEncrypted
 	}
-	o.SetServiceMetadata(sm)
+	o.SetSystemMetadata(sm)
 
 	return o, nil
 }
