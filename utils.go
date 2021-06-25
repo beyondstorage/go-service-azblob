@@ -13,9 +13,9 @@ import (
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 
+	"github.com/beyondstorage/go-endpoint"
 	ps "github.com/beyondstorage/go-storage/v4/pairs"
 	"github.com/beyondstorage/go-storage/v4/pkg/credential"
-	"github.com/beyondstorage/go-storage/v4/pkg/endpoint"
 	"github.com/beyondstorage/go-storage/v4/pkg/httpclient"
 	"github.com/beyondstorage/go-storage/v4/services"
 	typ "github.com/beyondstorage/go-storage/v4/types"
@@ -105,7 +105,17 @@ func newServicer(pairs ...typ.Pair) (srv *Service, err error) {
 		return nil, err
 	}
 
-	primaryURL, _ := url.Parse(ep.String())
+	var uri string
+	switch ep.Protocol() {
+	case endpoint.ProtocolHTTP:
+		uri, _, _ = ep.HTTP()
+	case endpoint.ProtocolHTTPS:
+		uri, _, _ = ep.HTTPS()
+	default:
+		return nil, services.PairUnsupportedError{Pair: ps.WithEndpoint(opt.Endpoint)}
+	}
+
+	primaryURL, _ := url.Parse(uri)
 
 	cred, err := credential.Parse(opt.Credential)
 	if err != nil {
@@ -295,7 +305,7 @@ func (s *Storage) formatFileObject(v azblob.BlobItemInternal) (o *typ.Object, er
 		o.SetContentMd5(base64.StdEncoding.EncodeToString(v.Properties.ContentMD5))
 	}
 
-	var sm ObjectMetadata
+	var sm ObjectSystemMetadata
 	if value := v.Properties.AccessTier; value != "" {
 		sm.AccessTier = string(value)
 	}
@@ -308,7 +318,7 @@ func (s *Storage) formatFileObject(v azblob.BlobItemInternal) (o *typ.Object, er
 	if v.Properties.ServerEncrypted != nil {
 		sm.ServerEncrypted = *v.Properties.ServerEncrypted
 	}
-	o.SetServiceMetadata(sm)
+	o.SetSystemMetadata(sm)
 
 	return o, nil
 }
@@ -336,8 +346,18 @@ func calculateEncryptionHeaders(key []byte, scope string) (cpk azblob.ClientProv
 
 const (
 	// AppendBlobIfMaxSizeLessThanOrEqual ensures that the AppendBlock operation succeeds only if the append blob's size is less than or equal to a value.
-	// For more information, see https://docs.microsoft.com/rest/api/storageservices/append-block.
+	// ref: https://docs.microsoft.com/rest/api/storageservices/append-block.
 	AppendBlobIfMaxSizeLessThanOrEqual = 4 * 1024 * 1024 * 50000
+	// AppendSizeMaximum is the max append size in per append operation.
+	// ref: https://docs.microsoft.com/rest/api/storageservices/append-block.
+	AppendSizeMaximum = 4 * 1024 * 1024
+	// AppendNumberMaximum is the max append numbers in append operation.
+	// ref: https://docs.microsoft.com/rest/api/storageservices/append-block.
+	AppendNumberMaximum = 50000
+
+	// WriteSizeMaximum is the maximum size for write operation.
+	// ref: https://docs.microsoft.com/en-us/rest/api/storageservices/put-blob
+	WriteSizeMaximum = 5000 * 1024 * 1024
 )
 
 func checkError(err error, expect azblob.ServiceCodeType) bool {

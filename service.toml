@@ -7,6 +7,7 @@ required = ["credential", "endpoint"]
 optional = ["service_features", "default_service_pairs", "http_client_options"]
 
 [namespace.storage]
+features = ["virtual_dir"]
 implement = ["appender", "direr"]
 
 [namespace.storage.new]
@@ -38,8 +39,7 @@ optional = ["content_md5", "encryption_key", "encryption_scope"]
 optional = ["encryption_key", "encryption_scope", "object_mode"]
 
 [namespace.storage.op.create_dir]
-simulated = true
-optional = ["access_tier", "encryption_key", "encryption_scope"]
+optional = ["access_tier"]
 
 [pairs.service_features]
 type = "ServiceFeatures"

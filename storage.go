@@ -3,11 +3,13 @@ package azblob
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"strconv"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 
+	ps "github.com/beyondstorage/go-storage/v4/pairs"
 	"github.com/beyondstorage/go-storage/v4/pkg/iowrap"
 	"github.com/beyondstorage/go-storage/v4/services"
 	. "github.com/beyondstorage/go-storage/v4/types"
@@ -21,6 +23,10 @@ func (s *Storage) create(path string, opt pairStorageCreate) (o *Object) {
 	rp := s.getAbsPath(path)
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		if !s.features.VirtualDir {
+			return
+		}
+
 		rp += "/"
 		o = s.newObject(true)
 		o.Mode = ModeDir
@@ -65,6 +71,11 @@ func (s *Storage) createAppend(ctx context.Context, path string, opt pairStorage
 }
 
 func (s *Storage) createDir(ctx context.Context, path string, opt pairStorageCreateDir) (o *Object, err error) {
+	if !s.features.VirtualDir {
+		err = NewOperationNotImplementedError("create_dir")
+		return
+	}
+
 	rp := s.getAbsPath(path)
 
 	// Specify a character or string delimiter within a blob name to create a virtual hierarchy.
@@ -76,18 +87,10 @@ func (s *Storage) createDir(ctx context.Context, path string, opt pairStorageCre
 		accessTier = azblob.AccessTierType(opt.AccessTier)
 	}
 
-	var cpk azblob.ClientProvidedKeyOptions
-	if opt.HasEncryptionKey {
-		cpk, err = calculateEncryptionHeaders(opt.EncryptionKey, opt.EncryptionScope)
-		if err != nil {
-			return
-		}
-	}
-
 	_, err = s.bucket.NewBlockBlobURL(rp).Upload(
 		ctx, iowrap.SizedReadSeekCloser(nil, 0), azblob.BlobHTTPHeaders{},
 		azblob.Metadata{}, azblob.BlobAccessConditions{},
-		accessTier, azblob.BlobTagsMap{}, cpk)
+		accessTier, azblob.BlobTagsMap{}, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		return
 	}
@@ -103,6 +106,11 @@ func (s *Storage) delete(ctx context.Context, path string, opt pairStorageDelete
 	rp := s.getAbsPath(path)
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		if !s.features.VirtualDir {
+			err = services.PairUnsupportedError{Pair: ps.WithObjectMode(opt.ObjectMode)}
+			return
+		}
+
 		rp += "/"
 	}
 
@@ -145,6 +153,10 @@ func (s *Storage) metadata(opt pairStorageMetadata) (meta *StorageMeta) {
 	meta = NewStorageMeta()
 	meta.Name = s.name
 	meta.WorkDir = s.workDir
+	meta.SetWriteSizeMaximum(WriteSizeMaximum)
+	meta.SetAppendSizeMaximum(AppendSizeMaximum)
+	meta.SetAppendNumberMaximum(AppendNumberMaximum)
+	meta.SetAppendTotalSizeMaximum(AppendBlobIfMaxSizeLessThanOrEqual)
 	return meta
 }
 
@@ -258,6 +270,11 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 	rp := s.getAbsPath(path)
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
+		if !s.features.VirtualDir {
+			err = services.PairUnsupportedError{Pair: ps.WithObjectMode(opt.ObjectMode)}
+			return
+		}
+
 		rp += "/"
 	}
 
@@ -297,7 +314,7 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 		o.SetContentMd5(base64.StdEncoding.EncodeToString(v))
 	}
 
-	var sm ObjectMetadata
+	var sm ObjectSystemMetadata
 	if v := output.AccessTier(); v != "" {
 		sm.AccessTier = v
 	}
@@ -310,12 +327,17 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 	if v, err := strconv.ParseBool(output.IsServerEncrypted()); err == nil {
 		sm.ServerEncrypted = v
 	}
-	o.SetServiceMetadata(sm)
+	o.SetSystemMetadata(sm)
 
 	return o, nil
 }
 
 func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int64, opt pairStorageWrite) (n int64, err error) {
+	if size > WriteSizeMaximum {
+		err = fmt.Errorf("size limit exceeded: %w", services.ErrRestrictionDissatisfied)
+		return
+	}
+
 	rp := s.getAbsPath(path)
 
 	if opt.HasIoCallback {
@@ -356,6 +378,10 @@ func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int6
 }
 
 func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size int64, opt pairStorageWriteAppend) (n int64, err error) {
+	if size > AppendSizeMaximum {
+		err = fmt.Errorf("size limit exceeded: %w", services.ErrRestrictionDissatisfied)
+		return
+	}
 	rp := o.GetID()
 
 	offset, _ := o.GetAppendOffset()
