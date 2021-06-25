@@ -3,11 +3,13 @@ package azblob
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"strconv"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 
+	ps "github.com/beyondstorage/go-storage/v4/pairs"
 	"github.com/beyondstorage/go-storage/v4/pkg/iowrap"
 	"github.com/beyondstorage/go-storage/v4/services"
 	. "github.com/beyondstorage/go-storage/v4/types"
@@ -70,7 +72,7 @@ func (s *Storage) createAppend(ctx context.Context, path string, opt pairStorage
 
 func (s *Storage) createDir(ctx context.Context, path string, opt pairStorageCreateDir) (o *Object, err error) {
 	if !s.features.VirtualDir {
-		err = services.ErrCapabilityInsufficient
+		err = NewOperationNotImplementedError("create_dir")
 		return
 	}
 
@@ -105,7 +107,7 @@ func (s *Storage) delete(ctx context.Context, path string, opt pairStorageDelete
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
 		if !s.features.VirtualDir {
-			err = services.ErrCapabilityInsufficient
+			err = services.PairUnsupportedError{Pair: ps.WithObjectMode(opt.ObjectMode)}
 			return
 		}
 
@@ -269,7 +271,7 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 
 	if opt.HasObjectMode && opt.ObjectMode.IsDir() {
 		if !s.features.VirtualDir {
-			err = services.ErrCapabilityInsufficient
+			err = services.PairUnsupportedError{Pair: ps.WithObjectMode(opt.ObjectMode)}
 			return
 		}
 
@@ -332,7 +334,7 @@ func (s *Storage) stat(ctx context.Context, path string, opt pairStorageStat) (o
 
 func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int64, opt pairStorageWrite) (n int64, err error) {
 	if size > WriteSizeMaximum {
-		err = services.ErrRestrictionDissatisfied
+		err = fmt.Errorf("size limit exceeded: %w", services.ErrRestrictionDissatisfied)
 		return
 	}
 
@@ -377,7 +379,7 @@ func (s *Storage) write(ctx context.Context, path string, r io.Reader, size int6
 
 func (s *Storage) writeAppend(ctx context.Context, o *Object, r io.Reader, size int64, opt pairStorageWriteAppend) (n int64, err error) {
 	if size > AppendSizeMaximum {
-		err = services.ErrRestrictionDissatisfied
+		err = fmt.Errorf("size limit exceeded: %w", services.ErrRestrictionDissatisfied)
 		return
 	}
 	rp := o.GetID()
