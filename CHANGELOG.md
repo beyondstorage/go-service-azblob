@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [v2.1.0] - 2021-06-29
+
+### Added
+
+- *: Implement GSP-87 Feature Gates (#25)
+- storage: Implement CreateDir (#26)
+- storage: Implement GSP-97 Add Restrictions in Storage Metadata (#27)
+
+### Changed
+
+- *: Implement GSP-109 Redesign Features (#27)
+- *: Implement GSP-117 Rename Service to System as the Opposite to Global (#27)
+
 ## [v2.0.0] - 2021-05-24
 
 ### Added
@@ -43,5 +56,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Implement azblob services.
 
+[v2.1.0]: https://github.com/beyondstorage/go-service-azblob/compare/v2.0.0...v2.1.0
 [v2.0.0]: https://github.com/beyondstorage/go-service-azblob/compare/v1.1.0...v2.0.0
 [v1.1.0]: https://github.com/beyondstorage/go-service-azblob/compare/v1.0.0...v1.1.0
