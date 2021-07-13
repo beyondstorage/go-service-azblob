@@ -134,6 +134,11 @@ func (s *Storage) list(ctx context.Context, path string, opt pairStorageList) (o
 		prefix:     s.getAbsPath(path),
 	}
 
+	if !opt.HasListMode {
+		// Support `ListModePrefix` as the default `ListMode`.
+		opt.ListMode = ListModePrefix
+	}
+
 	var nextFn NextObjectFunc
 
 	switch {
