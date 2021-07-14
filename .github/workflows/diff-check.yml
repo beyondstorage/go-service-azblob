@@ -1,10 +1,10 @@
-name: "diff_check"
+name: "diff-check"
 
 on: [ push,pull_request ]
 
 jobs:
-  diff_check:
-    name: diff_check
+  diff-check:
+    name: diff-check
     runs-on: ubuntu-latest
 
     steps:
