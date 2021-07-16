@@ -1162,6 +1162,12 @@ func (s *Storage) DeleteWithContext(ctx context.Context, path string, pairs ...P
 
 // List will return list a specific path.
 //
+// ## Behavior
+//
+// - Service SHOULD support default `ListMode`.
+// - Service SHOULD implement `ListModeDir` without the check for `VirtualDir`.
+// - Service DON'T NEED to `Stat` while in `List`.
+//
 // This function will create a context by default.
 func (s *Storage) List(path string, pairs ...Pair) (oi *ObjectIterator, err error) {
 	ctx := context.Background()
@@ -1169,6 +1175,12 @@ func (s *Storage) List(path string, pairs ...Pair) (oi *ObjectIterator, err erro
 }
 
 // ListWithContext will return list a specific path.
+//
+// ## Behavior
+//
+// - Service SHOULD support default `ListMode`.
+// - Service SHOULD implement `ListModeDir` without the check for `VirtualDir`.
+// - Service DON'T NEED to `Stat` while in `List`.
 func (s *Storage) ListWithContext(ctx context.Context, path string, pairs ...Pair) (oi *ObjectIterator, err error) {
 	defer func() {
 		err = s.formatError("list", err, path)
