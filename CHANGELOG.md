@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [v2.2.0] - 2021-07-21
+
+### Added
+
+- ci: Add gofmt action (#33)
+- ci: Add dependabot auto build support (#36)
+- ci: Add diff check action (#37)
+
+### Changed
+
+- storage: Update types in service.toml to golang types (#32)
+- storage: Implement GSP-654 Unify List Behavior (#32)
+
+### Fixed
+
+- ci: Fix checkout wrong commit in auto-build (#40)
+- ci: Fix auto build not work correctly
+
+### Upgraded
+
+- build(deps): Bump github.com/Azure/azure-storage-blob-go from 0.13.0 to 0.14.0 (#30)
+
 ## [v2.1.0] - 2021-06-29
 
 ### Added
@@ -56,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Implement azblob services.
 
+[v2.2.0]: https://github.com/beyondstorage/go-service-azblob/compare/v2.1.0...v2.2.0
 [v2.1.0]: https://github.com/beyondstorage/go-service-azblob/compare/v2.0.0...v2.1.0
 [v2.0.0]: https://github.com/beyondstorage/go-service-azblob/compare/v1.1.0...v2.0.0
 [v1.1.0]: https://github.com/beyondstorage/go-service-azblob/compare/v1.0.0...v1.1.0
