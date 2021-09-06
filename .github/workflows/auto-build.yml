@@ -11,8 +11,8 @@ jobs:
     if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
       - name: Dependabot metadata
-        id: metadata
         uses: dependabot/fetch-metadata@v1.1.0
+        id: metadata
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
@@ -32,5 +32,12 @@ jobs:
 
       - name: Auto commit
         uses: stefanzweifel/git-auto-commit-action@v4
+        if: ${{contains(steps.metadata.outputs.dependency-names, 'go-storage')
         with:
           commit_message: Auto build to generate code
+
+      - name: Enable auto-merge for dependabot PRs
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.ROBOT_GITHUB_TOKEN }}
