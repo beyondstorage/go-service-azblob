@@ -6,16 +6,22 @@ permissions:
   contents: write
 
 jobs:
-  dependabot:
+  metadata:
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    outputs:
+      dependency-names: ${{ steps.metadata.outputs.dependency-names }}
     steps:
       - name: Dependabot metadata
-        uses: dependabot/fetch-metadata@v1.1.0
+        uses: Xuanwo/fetch-metadata@v1.2.0
         id: metadata
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
+  dependabot:
+    needs: metadata
+    if: ${{ needs.metadata.outputs.dependency-names != '' }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
