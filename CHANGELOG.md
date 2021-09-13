@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [v2.3.0] - 2021-09-13
+
+### Changed
+
+- ci: Auto merge updates from dependabot if CI passed
+- ci: Allow PRs that not act by dependabot
+- ci: Cleanup Service Integration Tests (#50)
+- docs: Update README (#51)
+
 ## [v2.2.0] - 2021-07-21
 
 ### Added
@@ -78,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Implement azblob services.
 
+[v2.3.0]: https://github.com/beyondstorage/go-service-azblob/compare/v2.2.0...v2.3.0
 [v2.2.0]: https://github.com/beyondstorage/go-service-azblob/compare/v2.1.0...v2.2.0
 [v2.1.0]: https://github.com/beyondstorage/go-service-azblob/compare/v2.0.0...v2.1.0
 [v2.0.0]: https://github.com/beyondstorage/go-service-azblob/compare/v1.1.0...v2.0.0
